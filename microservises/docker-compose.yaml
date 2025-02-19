@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  valuator:
+    container_name: valuator
+    build:
+      context: ./valuator
+      dockerfile: Dockerfile
+    environment:
+      - REDIS_URL=redis:6379
+    ports:
+      - "8082:8082"
+    networks:
+      - app-network
+
+  redis:
+    container_name: redis
+    image: "redis:latest"
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - app-network
+
+networks:
+  app-network:
+
+volumes:
+  redis_data:
