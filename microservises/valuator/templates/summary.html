@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Результат обработки</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fc;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        p {
+            font-size: 16px;
+            margin: 10px 0;
+            color: #555;
+        }
+        strong {
+            color: #333;
+        }
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 16px;
+            text-decoration: none;
+            color: #4CAF50;
+            border: 1px solid #4CAF50;
+            padding: 8px 20px;
+            border-radius: 4px;
+        }
+        a:hover {
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Результат обработки текста</h1>
+    <p><strong>Текст:</strong> {{.Text}}</p>
+    <p><strong>Рейтинг (rank):</strong> {{.Rank}}</p>
+    <p><strong>Похожесть (similarity):</strong> {{.Similarity}}</p>
+    <a href="/">Вернуться на главную</a>
+</div>
+</body>
+</html>

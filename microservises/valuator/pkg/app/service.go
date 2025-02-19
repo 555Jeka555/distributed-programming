@@ -2,10 +2,13 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"github.com/gofrs/uuid"
 	"log"
 	"strings"
 )
+
+const ALPHABET = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZабвгдеёжзийклмнопрстуфхцчшщъыьэюя"
 
 type Storage interface {
 	Set(ctx context.Context, key string, text string)
@@ -52,12 +55,16 @@ func (v *valuatorService) AddText(ctx context.Context, text string) int {
 }
 
 func (v *valuatorService) CalculateRank(text string) float64 {
-	alphabet := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZабвгдеёжзийклмнопрстуфхцчшщъыьэюя"
+	fmt.Println(text)
+
 	var nonAlphaCount int
 	for _, char := range text {
-		if !strings.ContainsRune(alphabet, char) {
+		if !strings.ContainsRune(ALPHABET, char) {
 			nonAlphaCount++
 		}
 	}
-	return float64(nonAlphaCount) / float64(len(text))
+	fmt.Println(nonAlphaCount)
+	fmt.Println(len(text))
+
+	return float64(nonAlphaCount) / float64(len([]rune(text)))
 }
