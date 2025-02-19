@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"github.com/gofrs/uuid"
 	"log"
 	"strings"
@@ -55,16 +54,12 @@ func (v *valuatorService) AddText(ctx context.Context, text string) int {
 }
 
 func (v *valuatorService) CalculateRank(text string) float64 {
-	fmt.Println(text)
-
 	var nonAlphaCount int
 	for _, char := range text {
 		if !strings.ContainsRune(ALPHABET, char) {
 			nonAlphaCount++
 		}
 	}
-	fmt.Println(nonAlphaCount)
-	fmt.Println(len(text))
 
 	return float64(nonAlphaCount) / float64(len([]rune(text)))
 }
