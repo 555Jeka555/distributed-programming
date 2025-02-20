@@ -26,6 +26,7 @@ func main() {
 
 	r.HandleFunc("/", handler.Index).Methods("GET")
 	r.HandleFunc("/summary", handler.Summary).Methods("POST")
+	r.HandleFunc("/about", handler.About).Methods("GET")
 
 	log.Println("Starting server on :8082")
 	http.ListenAndServe(":8082", r)

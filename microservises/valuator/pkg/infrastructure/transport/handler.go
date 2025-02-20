@@ -10,6 +10,7 @@ import (
 
 type Handler interface {
 	Index(w http.ResponseWriter, r *http.Request)
+	About(w http.ResponseWriter, r *http.Request)
 	Summary(w http.ResponseWriter, r *http.Request)
 }
 
@@ -39,7 +40,7 @@ func NewHandler(
 	}
 }
 
-func (a *handler) Index(w http.ResponseWriter, r *http.Request) {
+func (a *handler) Index(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 
 	tmplParsed, err := template.ParseFiles("./templates/index.html")
@@ -75,6 +76,21 @@ func (a *handler) Summary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = tmplParsed.Execute(w, data)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (a *handler) About(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+
+	tmplParsed, err := template.ParseFiles("./templates/about.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = tmplParsed.Execute(w, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
