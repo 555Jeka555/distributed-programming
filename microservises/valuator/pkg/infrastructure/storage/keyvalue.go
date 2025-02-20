@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/go-redis/redis/v8"
-	"log"
+	"server/pkg/app"
 )
 
 func NewKeyValue(rdb *redis.Client) *keyValue {
@@ -17,11 +17,21 @@ type keyValue struct {
 	rdb *redis.Client
 }
 
-func (k *keyValue) Set(ctx context.Context, key string, text string) {
-	err := k.rdb.Set(ctx, key, text, 0).Err()
-	if err != nil {
-		log.Fatalf("Could not add text to Redis: %v", err)
+func (k *keyValue) Set(ctx context.Context, key string, text string) error {
+	_, err := k.rdb.Get(ctx, key).Result()
+	if !errors.Is(err, redis.Nil) {
+		return app.ErrKeyAlreadyExists
 	}
+	if err != nil && !errors.Is(err, redis.Nil) {
+		return err
+	}
+
+	err = k.rdb.Set(ctx, key, text, 0).Err()
+	if err != nil && !errors.Is(err, redis.Nil) {
+		return err
+	}
+
+	return nil
 }
 
 func (k *keyValue) ListKey(ctx context.Context) ([]string, error) {

@@ -51,7 +51,7 @@ func (a *handler) Index(w http.ResponseWriter, _ *http.Request) {
 
 	err = tmplParsed.Execute(w, nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 }
 
@@ -77,7 +77,7 @@ func (a *handler) Summary(w http.ResponseWriter, r *http.Request) {
 
 	err = tmplParsed.Execute(w, data)
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 }
 
@@ -92,6 +92,6 @@ func (a *handler) About(w http.ResponseWriter, _ *http.Request) {
 
 	err = tmplParsed.Execute(w, nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 }
