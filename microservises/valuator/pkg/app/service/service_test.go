@@ -1,61 +1,68 @@
-package service
+package service_test
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
+	"errors"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"server/pkg/app/model"
+	"server/pkg/app/service"
 )
 
-type MockStorage struct {
-	mock.Mock
+type MockTextRepository struct {
+	texts map[model.TextID]model.Text
 }
 
-func (m *MockStorage) Set(ctx context.Context, key string, text string) error {
-	args := m.Called(ctx, key, text)
-	return args.Error(0)
+func NewMockTextRepository() *MockTextRepository {
+	return &MockTextRepository{
+		texts: make(map[model.TextID]model.Text),
+	}
 }
 
-func (m *MockStorage) ListKey(ctx context.Context) ([]string, error) {
-	args := m.Called(ctx)
-	return args.Get(0).([]string), args.Error(1)
+func (m *MockTextRepository) NextID(text string) model.TextID {
+	id := model.TextID(text)
+	return id
 }
 
-func (m *MockStorage) ListValue(ctx context.Context, keys []string) ([]string, error) {
-	args := m.Called(ctx, keys)
-	return args.Get(0).([]string), args.Error(1)
+func (m *MockTextRepository) Store(_ context.Context, text model.Text) error {
+	if _, exists := m.texts[text.ID()]; exists {
+		return service.ErrKeyAlreadyExists
+	}
+	m.texts[text.ID()] = text
+	return nil
 }
 
-func TestAddText(t *testing.T) {
-	mockStorage := new(MockStorage)
-	service := NewValuatorService(mockStorage)
-
-	mockStorage.On("Set", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-	result := service.AddText(context.Background(), "newText")
-	assert.Equal(t, 0, result)
-
-	mockStorage.On("Set", mock.Anything, mock.Anything, mock.Anything).Return(ErrKeyAlreadyExists).Once()
-	result = service.AddText(context.Background(), "newText")
-	assert.Equal(t, 1, result)
-
-	mockStorage.AssertExpectations(t)
+func (m *MockTextRepository) FindByID(ctx context.Context, textID model.TextID) (model.Text, error) {
+	text, exists := m.texts[textID]
+	if !exists {
+		return model.Text{}, errors.New("text not found")
+	}
+	return text, nil
 }
 
-func TestCalculateRank(t *testing.T) {
-	service := NewValuatorService(nil)
+func TestAddText_Success(t *testing.T) {
+	repo := NewMockTextRepository()
+	valuatorService := service.NewValuatorService(repo)
 
-	text := "abc 123"
-	expectedRank := 0.5714285714285714
-	rank := service.CalculateRank(text)
-	assert.Equal(t, expectedRank, rank)
+	textValue := "Hello, World!"
+	textID, err := valuatorService.AddText(context.Background(), textValue)
 
-	text = "abcd"
-	expectedRank = 0
-	rank = service.CalculateRank(text)
-	assert.Equal(t, expectedRank, rank)
+	assert.NoError(t, err)
+	assert.Equal(t, model.TextID("Hello, World!"), textID)
+	assert.Len(t, repo.texts, 1)
+}
 
-	text = "abc 123 абв"
-	expectedRank = 0.45454545454545453
-	rank = service.CalculateRank(text)
-	assert.Equal(t, expectedRank, rank)
+func TestAddText_Duplicate(t *testing.T) {
+	repo := NewMockTextRepository()
+	valuatorService := service.NewValuatorService(repo)
+
+	textValue := "Hello, World!"
+	_, err := valuatorService.AddText(context.Background(), textValue)
+	assert.NoError(t, err)
+
+	textID, err := valuatorService.AddText(context.Background(), textValue)
+	assert.True(t, errors.Is(err, service.ErrKeyAlreadyExists))
+
+	assert.Equal(t, model.TextID("Hello, World!"), textID)
 }
