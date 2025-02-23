@@ -2,10 +2,12 @@ package transport
 
 import (
 	"context"
+	"errors"
 	"html/template"
 	"log"
 	"net/http"
-	"server/pkg/app"
+	"server/pkg/app/query"
+	"server/pkg/app/service"
 )
 
 type Handler interface {
@@ -26,17 +28,23 @@ type SummaryData struct {
 }
 
 type handler struct {
-	ctx             context.Context
-	valuatorService app.ValuatorService
+	ctx                        context.Context
+	valuatorService            service.ValuatorService
+	textStatisticsQueryService query.TextStatisticsQueryService
+	textQueryService           query.TextQueryService
 }
 
 func NewHandler(
 	ctx context.Context,
-	valuatorService app.ValuatorService,
-) *handler {
+	valuatorService service.ValuatorService,
+	textStatisticsQueryService query.TextStatisticsQueryService,
+	textQueryService query.TextQueryService,
+) Handler {
 	return &handler{
-		ctx:             ctx,
-		valuatorService: valuatorService,
+		ctx:                        ctx,
+		valuatorService:            valuatorService,
+		textStatisticsQueryService: textStatisticsQueryService,
+		textQueryService:           textQueryService,
 	}
 }
 
@@ -58,13 +66,30 @@ func (a *handler) Index(w http.ResponseWriter, _ *http.Request) {
 func (a *handler) Summary(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 
-	text := r.FormValue("text")
+	textValue := r.FormValue("text")
 
-	rank := a.valuatorService.CalculateRank(text)
-	similarity := a.valuatorService.AddText(a.ctx, text)
+	textID, err := a.valuatorService.AddText(a.ctx, textValue)
+	similarity := 0
+	if errors.Is(err, service.ErrKeyAlreadyExists) {
+		similarity = 1
+	}
+	if err != nil && !errors.Is(err, service.ErrKeyAlreadyExists) {
+		log.Panic(err)
+	}
+
+	summary, err := a.textStatisticsQueryService.GetSummary(a.ctx, string(textID))
+	if err != nil {
+		log.Panic(err)
+	}
+	rank := float64(summary.AlphabetCount) / float64(summary.AllCount)
+
+	text, err := a.textQueryService.GetTextByID(a.ctx, string(textID))
+	if err != nil {
+		log.Panic(err)
+	}
 
 	data := SummaryData{
-		Text:       text,
+		Text:       text.Value,
 		Rank:       rank,
 		Similarity: similarity,
 	}

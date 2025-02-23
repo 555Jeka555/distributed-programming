@@ -7,8 +7,9 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"server/pkg/app"
-	"server/pkg/infrastructure/storage"
+	"server/pkg/app/query"
+	"server/pkg/app/service"
+	"server/pkg/infrastructure/redis/repo"
 	"server/pkg/infrastructure/transport"
 )
 
@@ -16,11 +17,14 @@ func main() {
 	rdb := redis.NewClient(&redis.Options{
 		Addr: os.Getenv("REDIS_URL"),
 	})
-	keyValueStorage := storage.NewKeyValue(rdb)
-	valuatorService := app.NewValuatorService(keyValueStorage)
+
+	textRepo := repo.NewTextRepository(rdb)
+	valuatorService := service.NewValuatorService(textRepo)
+	textStatisticsQueryService := query.NewTextStatisticsQueryService(textRepo)
+	textQueryService := query.NewTextQueryService(textRepo)
 	ctx := context.Background()
 
-	handler := transport.NewHandler(ctx, valuatorService)
+	handler := transport.NewHandler(ctx, valuatorService, textStatisticsQueryService, textQueryService)
 
 	r := mux.NewRouter()
 
