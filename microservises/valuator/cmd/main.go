@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/mux"
 	"log"
@@ -32,6 +33,6 @@ func main() {
 	r.HandleFunc("/summary", handler.Summary).Methods("POST")
 	r.HandleFunc("/about", handler.About).Methods("GET")
 
-	log.Println("Starting server on :8082")
-	http.ListenAndServe(":8082", r)
+	log.Println(fmt.Sprintf("Starting server on %s", os.Getenv("LISTENING_SERVER_PORT")))
+	http.ListenAndServe(os.Getenv("LISTENING_SERVER_PORT"), r)
 }
