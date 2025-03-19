@@ -21,11 +21,10 @@ func main() {
 
 	textRepo := repo.NewTextRepository(rdb)
 	valuatorService := service.NewValuatorService(textRepo)
-	textStatisticsQueryService := query.NewTextStatisticsQueryService(textRepo)
 	textQueryService := query.NewTextQueryService(textRepo)
 	ctx := context.Background()
 
-	handler := transport.NewHandler(ctx, valuatorService, textStatisticsQueryService, textQueryService)
+	handler := transport.NewHandler(ctx, valuatorService, textQueryService)
 
 	r := mux.NewRouter()
 

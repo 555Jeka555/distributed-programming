@@ -28,23 +28,20 @@ type SummaryData struct {
 }
 
 type handler struct {
-	ctx                        context.Context
-	valuatorService            service.ValuatorService
-	textStatisticsQueryService query.TextStatisticsQueryService
-	textQueryService           query.TextQueryService
+	ctx              context.Context
+	valuatorService  service.ValuatorService
+	textQueryService query.TextQueryService
 }
 
 func NewHandler(
 	ctx context.Context,
 	valuatorService service.ValuatorService,
-	textStatisticsQueryService query.TextStatisticsQueryService,
 	textQueryService query.TextQueryService,
 ) Handler {
 	return &handler{
-		ctx:                        ctx,
-		valuatorService:            valuatorService,
-		textStatisticsQueryService: textStatisticsQueryService,
-		textQueryService:           textQueryService,
+		ctx:              ctx,
+		valuatorService:  valuatorService,
+		textQueryService: textQueryService,
 	}
 }
 
@@ -68,7 +65,7 @@ func (a *handler) Summary(w http.ResponseWriter, r *http.Request) {
 
 	textValue := r.FormValue("text")
 
-	textID, err := a.valuatorService.AddText(a.ctx, textValue)
+	textID, rankID, err := a.valuatorService.AddText(a.ctx, textValue)
 	similarity := 0
 	if errors.Is(err, service.ErrKeyAlreadyExists) {
 		similarity = 1
@@ -77,20 +74,14 @@ func (a *handler) Summary(w http.ResponseWriter, r *http.Request) {
 		log.Panic(err)
 	}
 
-	summary, err := a.textStatisticsQueryService.GetSummary(a.ctx, string(textID))
-	if err != nil {
-		log.Panic(err)
-	}
-	rank := float64(summary.AlphabetCount) / float64(summary.AllCount)
-
-	text, err := a.textQueryService.GetTextByID(a.ctx, string(textID))
+	text, err := a.textQueryService.GetTextByID(a.ctx, string(textID), string(rankID))
 	if err != nil {
 		log.Panic(err)
 	}
 
 	data := SummaryData{
 		Text:       text.Value,
-		Rank:       rank,
+		Rank:       text.Rank,
 		Similarity: similarity,
 	}
 

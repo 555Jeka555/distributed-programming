@@ -20,16 +20,16 @@ func NewMockTextRepository() *MockTextRepository {
 	}
 }
 
-func (m *MockTextRepository) NextID(text string) model.TextID {
+func (m *MockTextRepository) NextTextID(text string) model.TextID {
 	id := model.TextID(text)
 	return id
 }
 
 func (m *MockTextRepository) Store(_ context.Context, text model.Text) error {
-	if _, exists := m.texts[text.ID()]; exists {
+	if _, exists := m.texts[text.TextID()]; exists {
 		return service.ErrKeyAlreadyExists
 	}
-	m.texts[text.ID()] = text
+	m.texts[text.TextID()] = text
 	return nil
 }
 
