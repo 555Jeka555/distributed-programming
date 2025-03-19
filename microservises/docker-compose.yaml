@@ -9,8 +9,9 @@ services:
     environment:
       - LISTENING_SERVER_PORT=:8080
       - REDIS_URL=redis:6379
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     healthcheck:
-      test: ["CMD", "curl", "-f", "https://127.0.0.1:5001/"]
+      test: ["CMD", "curl", "-f", "https://127.0.0.1:8080/"]
       interval: 1s
       timeout: 2s
       retries: 3
@@ -18,7 +19,10 @@ services:
     networks:
       - app-network
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   valuator2:
     container_name: valuator2
@@ -28,6 +32,7 @@ services:
     environment:
       - LISTENING_SERVER_PORT=:8080
       - REDIS_URL=redis:6379
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     healthcheck:
       test: [ "CMD", "curl", "-f", "https://127.0.0.1:8080/" ]
       interval: 1s
@@ -37,7 +42,26 @@ services:
     networks:
       - app-network
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  rankcalculator:
+    container_name: rankcalculator
+    build:
+      context: ./rankcalculator
+      dockerfile: Dockerfile
+    environment:
+      - REDIS_URL=redis:6379
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    networks:
+      - app-network
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   nginx:
     image: nginx:alpine
@@ -71,8 +95,26 @@ services:
     networks:
       - app-network
 
+  rabbitmq:
+    image: rabbitmq:3.13.7
+    container_name: rabbitmq
+    hostname: rabbitmq
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - app-network
+
 networks:
   app-network:
 
 volumes:
   redis_data:
+  rabbitmq_data:
