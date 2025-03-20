@@ -7,7 +7,7 @@ import (
 )
 
 type TextQueryService interface {
-	GetTextByID(ctx context.Context, textID string, rankID string) (TextData, error)
+	GetTextByID(ctx context.Context, textID string) (TextData, error)
 }
 
 func NewTextQueryService(repo model.TextReadRepository) TextQueryService {
@@ -17,22 +17,24 @@ func NewTextQueryService(repo model.TextReadRepository) TextQueryService {
 }
 
 type TextData struct {
-	Value string
-	Rank  float64
+	Similarity int
+	Value      string
+	Rank       float64
 }
 
 type textQueryService struct {
 	repo model.TextReadRepository
 }
 
-func (t *textQueryService) GetTextByID(ctx context.Context, textID string, rankID string) (TextData, error) {
-	text, err := t.repo.FindByID(ctx, model.TextID(textID), model.RankID(rankID))
+func (t *textQueryService) GetTextByID(ctx context.Context, textID string) (TextData, error) {
+	text, err := t.repo.FindByID(ctx, model.TextID(textID))
 	if err != nil {
 		return TextData{}, err
 	}
 
 	return TextData{
-		Value: text.Value(),
-		Rank:  text.Rank(),
+		Similarity: text.Similarity(),
+		Value:      text.Value(),
+		Rank:       text.Rank(),
 	}, nil
 }

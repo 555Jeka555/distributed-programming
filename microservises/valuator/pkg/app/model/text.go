@@ -5,44 +5,34 @@ import (
 )
 
 type TextID string
-type RankID string
 
 type Text struct {
-	textID TextID
-	rankID RankID
-	value  string
-	rank   float64
+	textID     TextID
+	similarity int
+	value      string
+	rank       float64
+}
+
+type TextRepository interface {
+	TextReadRepository
+	NextTextID(text string) TextID
 }
 
 type TextReadRepository interface {
-	FindByID(ctx context.Context, textID TextID, rankID RankID) (Text, error)
-}
-
-func NewText(
-	textID TextID,
-	rankID RankID,
-	value string,
-	rank float64,
-) Text {
-	return Text{
-		textID: textID,
-		rankID: rankID,
-		value:  value,
-		rank:   rank,
-	}
+	FindByID(ctx context.Context, textID TextID) (Text, error)
 }
 
 func LoadText(
 	textID TextID,
-	rankID RankID,
+	similarity int,
 	value string,
 	rank float64,
 ) Text {
 	return Text{
-		textID: textID,
-		rankID: rankID,
-		value:  value,
-		rank:   rank,
+		textID:     textID,
+		similarity: similarity,
+		value:      value,
+		rank:       rank,
 	}
 }
 
@@ -50,12 +40,12 @@ func (t *Text) TextID() TextID {
 	return t.textID
 }
 
-func (t *Text) RankID() RankID {
-	return t.rankID
-}
-
 func (t *Text) Value() string {
 	return t.value
+}
+
+func (t *Text) Similarity() int {
+	return t.similarity
 }
 
 func (t *Text) Rank() float64 {

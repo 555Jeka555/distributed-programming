@@ -24,7 +24,7 @@ type writer struct {
 	channel   *amqp.Channel
 }
 
-func (w *writer) Write(body []byte) ([]byte, error) {
+func (w *writer) Write(body []byte) error {
 	q, err := w.channel.QueueDeclare(
 		"",    // name
 		false, // durable
@@ -34,17 +34,6 @@ func (w *writer) Write(body []byte) ([]byte, error) {
 		nil,   // arguments
 	)
 	failOnError(err, "Failed to declare a queue")
-
-	msgs, err := w.channel.Consume(
-		q.Name, // queue
-		"",     // consumer
-		true,   // auto-ack факт получения = факт доставки
-		false,  // exclusive
-		false,  // no-local
-		false,  // no-wait
-		nil,    // args
-	)
-	failOnError(err, "Failed to register a consumer")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -65,16 +54,7 @@ func (w *writer) Write(body []byte) ([]byte, error) {
 	failOnError(err, "Failed to publish a message")
 	log.Println("Writer body", string(body))
 
-	var res []byte
-	for d := range msgs {
-		if corrId == d.CorrelationId {
-			res = d.Body
-			failOnError(err, "Failed to convert body to integer")
-			break
-		}
-	}
-
-	return res, err
+	return err
 }
 
 func failOnError(err error, msg string) {

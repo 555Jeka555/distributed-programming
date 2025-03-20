@@ -2,42 +2,54 @@ package repo
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
-	"fmt"
 	"github.com/go-redis/redis/v8"
 	"server/pkg/app/model"
-	"strconv"
+	"server/pkg/infrastructure/keyvalue"
 )
 
-func NewTextRepository(rdb *redis.Client) *TextRepository {
-	return &TextRepository{
-		rdb: rdb,
+func NewTextRepository(rdb *redis.Client) model.TextRepository {
+	return &textRepository{
+		storage: keyvalue.NewStorage[textSerializable](rdb),
 	}
 }
 
-type TextRepository struct {
-	rdb *redis.Client
+type textSerializable struct {
+	TextID     string  `json:"text_id"`
+	Similarity int     `json:"similarity"`
+	Value      string  `json:"value"`
+	Rank       float64 `json:"rank"`
 }
 
-func (t *TextRepository) FindByID(ctx context.Context, textID model.TextID, rankID model.RankID) (model.Text, error) {
-	value, err := t.rdb.Get(ctx, string(textID)).Result()
-	if err != nil && !errors.Is(err, redis.Nil) {
-		return model.Text{}, err
-	}
+type textRepository struct {
+	storage keyvalue.Storage[textSerializable]
+}
 
-	rankStr, err := t.rdb.Get(ctx, string(rankID)).Result()
-	if err != nil && !errors.Is(err, redis.Nil) {
-		return model.Text{}, err
-	}
-	rank, err := strconv.ParseFloat(rankStr, 64)
+func (t *textRepository) NextTextID(text string) model.TextID {
+	return model.TextID(hashText(text))
+}
+
+func (t *textRepository) FindByID(ctx context.Context, textID model.TextID) (model.Text, error) {
+	text, err := t.storage.Get(ctx, string(textID))
 	if err != nil {
-		return model.Text{}, fmt.Errorf("failed to parse rank: %w", err)
+		if errors.Is(err, redis.Nil) {
+			return model.Text{}, nil
+		}
+		return model.Text{}, err
 	}
 
 	return model.LoadText(
-		textID,
-		rankID,
-		value,
-		rank,
+		model.TextID(text.TextID),
+		text.Similarity,
+		text.Value,
+		text.Rank,
 	), nil
+}
+
+func hashText(text string) string {
+	hash := sha256.New()
+	hash.Write([]byte(text))
+	return hex.EncodeToString(hash.Sum(nil))
 }

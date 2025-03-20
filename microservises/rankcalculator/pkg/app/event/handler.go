@@ -2,13 +2,12 @@ package event
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"server/pkg/app/service"
 )
 
 type Handler interface {
-	Handle(ctx context.Context, body string) ([]byte, error)
+	Handle(ctx context.Context, body string) error
 }
 
 func NewHandler(rankCalculator service.RankCalculatorService) Handler {
@@ -21,27 +20,11 @@ type handler struct {
 	rankCalculator service.RankCalculatorService
 }
 
-type eventBody struct {
-	TextID     string `json:"text_id"`
-	RankID     string `json:"rank_id"`
-	Similarity int    `json:"similarity"`
-}
-
-func (h *handler) Handle(ctx context.Context, body string) ([]byte, error) {
-	textID, rankID, err := h.rankCalculator.AddText(ctx, body)
-	similarity := 0
-	if errors.Is(err, service.ErrKeyAlreadyExists) {
-		similarity = 1
-	}
+func (h *handler) Handle(ctx context.Context, body string) error {
+	err := h.rankCalculator.AddText(ctx, body)
 	if err != nil && !errors.Is(err, service.ErrKeyAlreadyExists) {
-		return nil, err
+		return err
 	}
 
-	event := eventBody{
-		TextID:     string(textID),
-		RankID:     string(rankID),
-		Similarity: similarity,
-	}
-
-	return json.Marshal(event)
+	return nil
 }

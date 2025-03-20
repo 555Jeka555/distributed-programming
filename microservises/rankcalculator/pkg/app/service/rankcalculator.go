@@ -19,35 +19,39 @@ func NewRankCalculatorService(repo model.TextRepository) RankCalculatorService {
 }
 
 type RankCalculatorService interface {
-	AddText(ctx context.Context, value string) (model.TextID, model.RankID, error)
+	AddText(ctx context.Context, value string) error
 }
 
 type rankCalculatorService struct {
 	repo model.TextRepository
 }
 
-func (v *rankCalculatorService) AddText(ctx context.Context, value string) (model.TextID, model.RankID, error) { // TODO без дубликатов и итерирования
+func (v *rankCalculatorService) AddText(ctx context.Context, value string) error { // TODO без дубликатов и итерирования
 	textID := v.repo.NextTextID(value)
-	rankID := v.repo.NextRankID(value)
 	alphabetCount, allCount := symbolStatistics(value)
-	rank := 1 - float64(alphabetCount)/float64(allCount) // TODO Хранить сразу rank
-	text := model.NewText(textID, rankID, value, rank)
+	rank := 1 - float64(alphabetCount)/float64(allCount)
+	text := model.NewText(textID, 0, value, rank)
 
 	err := v.repo.Store(ctx, text)
 	if err != nil {
 		if errors.Is(err, ErrKeyAlreadyExists) {
-			return textID, rankID, err
+			err := v.repo.Delete(ctx, textID)
+			if err != nil {
+				return err
+			}
+			text = model.NewText(textID, 1, value, rank)
+
+			return v.repo.Store(ctx, text)
 		}
 		log.Panic(err)
 	}
 
-	return textID, rankID, nil
+	return nil
 }
 
 func symbolStatistics(text string) (alphabetCount int, allCount int) {
 	alphabetMap := generateAlphabetMap()
 	result := make(map[rune]bool)
-	// TODO for range по строке
 	for _, r := range text {
 		result[r] = true
 		allCount++

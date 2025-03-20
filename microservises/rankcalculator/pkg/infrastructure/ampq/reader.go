@@ -4,7 +4,6 @@ import (
 	"context"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
-	"time"
 )
 
 func NewReader(
@@ -37,7 +36,7 @@ func (r *Reader) ConnectReadChannel(channel *amqp.Channel) error {
 	msgs, err := channel.Consume(
 		q.Name, // queue
 		"",     // consumer
-		false,  // auto-ack
+		true,   // auto-ack
 		false,  // exclusive
 		false,  // no-local
 		false,  // no-wait
@@ -46,25 +45,9 @@ func (r *Reader) ConnectReadChannel(channel *amqp.Channel) error {
 	failOnError(err, "Failed to register a consumer")
 
 	go func() {
-		for m := range msgs {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			body, err := r.handler.Handle(ctx, m.Body)
-			cancel()
-
-			err = channel.PublishWithContext(ctx,
-				"",        // exchange
-				m.ReplyTo, // routing key
-				false,     // mandatory
-				false,     // immediate
-				amqp.Publishing{
-					ContentType:   "application/json",
-					CorrelationId: m.CorrelationId,
-					Body:          body,
-				})
-			failOnError(err, "Failed to publish a message")
-			log.Println("Reader body", string(body))
-
-			err = m.Ack(false)
+		for d := range msgs {
+			err = r.handler.Handle(context.Background(), d.Body)
+			log.Printf("Received a message: %s", d.Body)
 		}
 	}()
 

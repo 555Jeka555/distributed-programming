@@ -3,16 +3,19 @@ package transport
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"server/pkg/app/event"
 	"server/pkg/app/query"
+	"server/pkg/app/service"
 )
 
 type Handler interface {
 	Index(w http.ResponseWriter, r *http.Request)
 	About(w http.ResponseWriter, r *http.Request)
+	SummaryCreate(w http.ResponseWriter, r *http.Request)
 	Summary(w http.ResponseWriter, r *http.Request)
 }
 
@@ -30,11 +33,13 @@ type SummaryData struct {
 func NewHandler(
 	ctx context.Context,
 	writer event.Writer,
+	textService service.TextService,
 	textQueryService query.TextQueryService,
 ) Handler {
 	return &handler{
 		ctx:              ctx,
 		writer:           writer,
+		textService:      textService,
 		textQueryService: textQueryService,
 	}
 }
@@ -42,13 +47,8 @@ func NewHandler(
 type handler struct {
 	ctx              context.Context
 	writer           event.Writer
+	textService      service.TextService
 	textQueryService query.TextQueryService
-}
-
-type eventBody struct {
-	TextID     string `json:"text_id"`
-	RankID     string `json:"rank_id"`
-	Similarity int    `json:"similarity"`
 }
 
 func (h *handler) Index(w http.ResponseWriter, _ *http.Request) {
@@ -66,9 +66,7 @@ func (h *handler) Index(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-func (h *handler) Summary(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
-
+func (h *handler) SummaryCreate(w http.ResponseWriter, r *http.Request) {
 	textValue := r.FormValue("text")
 
 	// TODO передавать от сюда айдишники, и со страницы отправлять запросы на получение данных, убрать rcp и диспатчить событие из rankcalcualtor
@@ -80,18 +78,25 @@ func (h *handler) Summary(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	respBody, err := h.writer.Write(body)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-	var evt eventBody
-
-	err = json.Unmarshal(respBody, &evt)
+	err = h.writer.Write(body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	text, err := h.textQueryService.GetTextByID(h.ctx, evt.TextID, evt.RankID)
+	redirectURL := fmt.Sprintf("/summary?textID=%s", h.textService.GetNextTextID(textValue))
+	http.Redirect(w, r, redirectURL, http.StatusFound)
+}
+
+func (h *handler) Summary(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+
+	textID := r.URL.Query().Get("textID")
+	if textID == "" {
+		http.Error(w, "textID parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	text, err := h.textQueryService.GetTextByID(h.ctx, textID)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -99,7 +104,7 @@ func (h *handler) Summary(w http.ResponseWriter, r *http.Request) {
 	data := SummaryData{
 		Text:       text.Value,
 		Rank:       text.Rank,
-		Similarity: evt.Similarity,
+		Similarity: text.Similarity,
 	}
 
 	tmplParsed, err := template.ParseFiles("./templates/summary.html")

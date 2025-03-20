@@ -8,7 +8,7 @@ import (
 )
 
 type IntegrationEventHandler interface {
-	Handle(ctx context.Context, body []byte) ([]byte, error)
+	Handle(ctx context.Context, body []byte) error
 }
 
 func NewIntegrationEventHandler(handler event.Handler) IntegrationEventHandler {
@@ -25,12 +25,12 @@ type eventBody struct {
 	Text string `json:"text"`
 }
 
-func (h *integrationEventHandler) Handle(ctx context.Context, body []byte) ([]byte, error) {
+func (h *integrationEventHandler) Handle(ctx context.Context, body []byte) error {
 	var evt eventBody
 
 	err := json.Unmarshal(body, &evt)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	return h.handler.Handle(ctx, evt.Text)

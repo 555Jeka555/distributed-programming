@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"server/pkg/app/query"
+	"server/pkg/app/service"
 	"server/pkg/infrastructure/ampq"
 	"server/pkg/infrastructure/redis/repo"
 	"server/pkg/infrastructure/transport"
@@ -30,15 +31,17 @@ func main() {
 
 	textRepo := repo.NewTextRepository(rdb)
 	textQueryService := query.NewTextQueryService(textRepo)
+	textService := *service.NewTextService(textRepo)
 
 	ctx := context.Background()
 	writer := ampq.NewWriter("text", ch)
-	handler := transport.NewHandler(ctx, writer, textQueryService)
+	handler := transport.NewHandler(ctx, writer, textService, textQueryService)
 
 	r := mux.NewRouter()
 
 	r.HandleFunc("/", handler.Index).Methods("GET")
-	r.HandleFunc("/summary", handler.Summary).Methods("POST")
+	r.HandleFunc("/summary/create", handler.SummaryCreate).Methods("POST")
+	r.HandleFunc("/summary", handler.Summary).Methods("GET")
 	r.HandleFunc("/about", handler.About).Methods("GET")
 
 	log.Println(fmt.Sprintf("Starting server on %s", os.Getenv("LISTENING_SERVER_PORT")))
