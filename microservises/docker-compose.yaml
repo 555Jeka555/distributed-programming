@@ -12,8 +12,8 @@ services:
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     healthcheck:
       test: ["CMD", "curl", "-f", "https://127.0.0.1:8080/"]
-      interval: 1s
-      timeout: 2s
+      interval: 3s
+      timeout: 4s
       retries: 3
       start_period: 3s
     networks:
@@ -35,8 +35,8 @@ services:
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     healthcheck:
       test: [ "CMD", "curl", "-f", "https://127.0.0.1:8080/" ]
-      interval: 1s
-      timeout: 2s
+      interval: 3s
+      timeout: 4s
       retries: 3
       start_period: 3s
     networks:

@@ -12,21 +12,21 @@ const ALPHABET = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZабвгд
 
 var ErrKeyAlreadyExists = errors.New("key already exists")
 
-func NewValuatorService(repo model.TextRepository) ValuatorService {
-	return &valuatorService{
+func NewRankCalculatorService(repo model.TextRepository) RankCalculatorService {
+	return &rankCalculatorService{
 		repo: repo,
 	}
 }
 
-type ValuatorService interface {
+type RankCalculatorService interface {
 	AddText(ctx context.Context, value string) (model.TextID, model.RankID, error)
 }
 
-type valuatorService struct {
+type rankCalculatorService struct {
 	repo model.TextRepository
 }
 
-func (v *valuatorService) AddText(ctx context.Context, value string) (model.TextID, model.RankID, error) { // TODO без дубликатов и итерирования
+func (v *rankCalculatorService) AddText(ctx context.Context, value string) (model.TextID, model.RankID, error) { // TODO без дубликатов и итерирования
 	textID := v.repo.NextTextID(value)
 	rankID := v.repo.NextRankID(value)
 	alphabetCount, allCount := symbolStatistics(value)

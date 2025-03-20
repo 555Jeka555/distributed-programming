@@ -14,13 +14,6 @@ type Text struct {
 	rank   float64
 }
 
-type TextRepository interface {
-	TextReadRepository
-	NextTextID(text string) TextID
-	NextRankID(text string) RankID
-	Store(ctx context.Context, text Text) error
-}
-
 type TextReadRepository interface {
 	FindByID(ctx context.Context, textID TextID, rankID RankID) (Text, error)
 }

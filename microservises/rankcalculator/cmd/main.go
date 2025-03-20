@@ -1,15 +1,20 @@
 package main
 
 import (
+	"github.com/go-redis/redis/v8"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
 	"os"
+	"server/pkg/app/event"
+	"server/pkg/app/service"
+	"server/pkg/infrastructure/ampq"
+	"server/pkg/infrastructure/redis/repo"
 )
 
 func main() {
-	//rdb := redis.NewClient(&redis.Options{
-	//	Addr: os.Getenv("REDIS_URL"),
-	//})
+	rdb := redis.NewClient(&redis.Options{
+		Addr: os.Getenv("REDIS_URL"),
+	})
 
 	conn, err := amqp.Dial(os.Getenv("RABBITMQ_URL"))
 	failOnError(err, "Failed to connect to RabbitMQ")
@@ -19,36 +24,18 @@ func main() {
 	failOnError(err, "Failed to open a channel")
 	defer ch.Close()
 
-	q, err := ch.QueueDeclare(
-		"hello", // name
-		false,   // durable
-		false,   // delete when unused
-		false,   // exclusive
-		false,   // no-wait
-		nil,     // arguments
-	)
-	failOnError(err, "Failed to declare a queue")
+	rankCalculatorRepo := repo.NewTextRepository(rdb)
+	rankCalculatorService := service.NewRankCalculatorService(rankCalculatorRepo)
 
-	msgs, err := ch.Consume(
-		q.Name, // queue
-		"",     // consumer
-		true,   // auto-ack
-		false,  // exclusive
-		false,  // no-local
-		false,  // no-wait
-		nil,    // args
-	)
-	failOnError(err, "Failed to register a consumer")
+	handler := event.NewHandler(rankCalculatorService)
+	integrationEventHandler := ampq.NewIntegrationEventHandler(handler)
+	reader := ampq.NewReader("text", integrationEventHandler)
 
 	var forever chan struct{}
 
-	go func() {
-		for d := range msgs {
-			log.Printf("Received a message: %s", d.Body)
-		}
-	}()
+	err = reader.ConnectReadChannel(ch)
+	failOnError(err, "Failed to connect to ReadChannel")
 
-	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
 	<-forever
 }
 
