@@ -38,7 +38,7 @@ func (w *writer) Write(body []byte) ([]byte, error) {
 	msgs, err := w.channel.Consume(
 		q.Name, // queue
 		"",     // consumer
-		true,   // auto-ack
+		true,   // auto-ack факт получения = факт доставки
 		false,  // exclusive
 		false,  // no-local
 		false,  // no-wait

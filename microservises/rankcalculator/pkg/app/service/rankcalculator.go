@@ -30,7 +30,7 @@ func (v *rankCalculatorService) AddText(ctx context.Context, value string) (mode
 	textID := v.repo.NextTextID(value)
 	rankID := v.repo.NextRankID(value)
 	alphabetCount, allCount := symbolStatistics(value)
-	rank := float64(alphabetCount) / float64(allCount) // TODO Хранить сразу rank
+	rank := 1 - float64(alphabetCount)/float64(allCount) // TODO Хранить сразу rank
 	text := model.NewText(textID, rankID, value, rank)
 
 	err := v.repo.Store(ctx, text)

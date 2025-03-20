@@ -3,6 +3,7 @@ version: '3.8'
 services:
   valuator1:
     container_name: valuator1
+    restart: always
     build:
       context: ./valuator
       dockerfile: Dockerfile
@@ -26,6 +27,7 @@ services:
 
   valuator2:
     container_name: valuator2
+    restart: always
     build:
       context: ./valuator
       dockerfile: Dockerfile
@@ -49,6 +51,7 @@ services:
 
   rankcalculator:
     container_name: rankcalculator
+    restart: always
     build:
       context: ./rankcalculator
       dockerfile: Dockerfile
