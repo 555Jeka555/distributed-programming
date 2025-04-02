@@ -26,7 +26,7 @@ type textRepository struct {
 	storage keyvalue.Storage[textSerializable]
 }
 
-func (t *textRepository) NextTextID(text string) model.TextID {
+func (t *textRepository) GetTextID(text string) model.TextID {
 	return model.TextID(hashText(text))
 }
 

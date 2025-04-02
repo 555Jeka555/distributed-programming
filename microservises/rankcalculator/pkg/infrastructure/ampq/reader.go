@@ -2,8 +2,9 @@ package ampq
 
 import (
 	"context"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
+
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func NewReader(

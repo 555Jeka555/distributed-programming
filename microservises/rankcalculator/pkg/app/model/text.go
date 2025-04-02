@@ -14,7 +14,7 @@ type Text struct {
 }
 
 type TextRepository interface {
-	NextTextID(text string) TextID
+	GetTextID(text string) TextID
 	Store(ctx context.Context, text Text) error
 	Delete(ctx context.Context, textID TextID) error
 }

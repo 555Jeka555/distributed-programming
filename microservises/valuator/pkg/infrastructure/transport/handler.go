@@ -47,6 +47,7 @@ func NewHandler(
 type handler struct {
 	ctx              context.Context
 	writer           event.Writer
+	writerExchange   event.Writer
 	textService      service.TextService
 	textQueryService query.TextQueryService
 }
@@ -83,7 +84,8 @@ func (h *handler) SummaryCreate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	redirectURL := fmt.Sprintf("/summary?textID=%s", h.textService.GetNextTextID(textValue))
+	textID := h.textService.GetTextID(textValue)
+	redirectURL := fmt.Sprintf("/summary?textID=%s", textID)
 	http.Redirect(w, r, redirectURL, http.StatusFound)
 }
 
@@ -117,6 +119,11 @@ func (h *handler) Summary(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Panic(err)
 	}
+
+	err = h.writer.WriteExchange(event.SimilarityCalculated{
+		TextID:     textID,
+		Similarity: text.Similarity,
+	})
 }
 
 func (h *handler) About(w http.ResponseWriter, _ *http.Request) {

@@ -12,6 +12,6 @@ func NewTextService(repo model.TextRepository) *TextService {
 	}
 }
 
-func (s *TextService) GetNextTextID(text string) model.TextID {
-	return s.repo.NextTextID(text)
+func (s *TextService) GetTextID(text string) model.TextID {
+	return s.repo.GetTextID(text)
 }

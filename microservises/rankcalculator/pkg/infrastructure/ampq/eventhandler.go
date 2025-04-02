@@ -3,22 +3,21 @@ package ampq
 import (
 	"context"
 	"encoding/json"
-
-	"server/pkg/app/event"
+	"server/pkg/app/handler"
 )
 
 type IntegrationEventHandler interface {
 	Handle(ctx context.Context, body []byte) error
 }
 
-func NewIntegrationEventHandler(handler event.Handler) IntegrationEventHandler {
+func NewIntegrationEventHandler(handler handler.Handler) IntegrationEventHandler {
 	return &integrationEventHandler{
 		handler: handler,
 	}
 }
 
 type integrationEventHandler struct {
-	handler event.Handler
+	handler handler.Handler
 }
 
 type eventBody struct {

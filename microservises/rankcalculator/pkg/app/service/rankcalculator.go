@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"server/pkg/app/event"
 
 	"server/pkg/app/model"
 )
@@ -12,9 +13,13 @@ const ALPHABET = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZабвгд
 
 var ErrKeyAlreadyExists = errors.New("key already exists")
 
-func NewRankCalculatorService(repo model.TextRepository) RankCalculatorService {
+func NewRankCalculatorService(
+	repo model.TextRepository,
+	write event.Writer,
+) RankCalculatorService {
 	return &rankCalculatorService{
-		repo: repo,
+		repo:  repo,
+		write: write,
 	}
 }
 
@@ -23,11 +28,12 @@ type RankCalculatorService interface {
 }
 
 type rankCalculatorService struct {
-	repo model.TextRepository
+	repo  model.TextRepository
+	write event.Writer
 }
 
-func (v *rankCalculatorService) AddText(ctx context.Context, value string) error { // TODO без дубликатов и итерирования
-	textID := v.repo.NextTextID(value)
+func (v *rankCalculatorService) AddText(ctx context.Context, value string) error {
+	textID := v.repo.GetTextID(value)
 	alphabetCount, allCount := symbolStatistics(value)
 	rank := 1 - float64(alphabetCount)/float64(allCount)
 	text := model.NewText(textID, 0, value, rank)
@@ -46,7 +52,10 @@ func (v *rankCalculatorService) AddText(ctx context.Context, value string) error
 		log.Panic(err)
 	}
 
-	return nil
+	return v.write.WriteExchange(event.RankCalculated{
+		TextID: string(textID),
+		Rank:   rank,
+	})
 }
 
 func symbolStatistics(text string) (alphabetCount int, allCount int) {

@@ -1,21 +1,14 @@
 package main
 
 import (
-	"github.com/go-redis/redis/v8"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
 	"os"
 	"server/pkg/app/handler"
-	"server/pkg/app/service"
 	"server/pkg/infrastructure/ampq"
-	"server/pkg/infrastructure/redis/repo"
 )
 
 func main() {
-	rdb := redis.NewClient(&redis.Options{
-		Addr: os.Getenv("REDIS_URL"),
-	})
-
 	conn, err := amqp.Dial(os.Getenv("RABBITMQ_URL"))
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
@@ -24,19 +17,14 @@ func main() {
 	failOnError(err, "Failed to open a channel")
 	defer ch.Close()
 
-	writer := ampq.NewWriter(ch)
-
-	rankCalculatorRepo := repo.NewTextRepository(rdb)
-	rankCalculatorService := service.NewRankCalculatorService(rankCalculatorRepo, writer)
-
-	handler := handler.NewHandler(rankCalculatorService)
+	handler := handler.NewHandler()
 	integrationEventHandler := ampq.NewIntegrationEventHandler(handler)
-	reader := ampq.NewReader("text", integrationEventHandler)
+	reader := ampq.NewReader("logs", integrationEventHandler)
 
 	var forever chan struct{}
 
-	err = reader.ConnectReadChannel(ch)
-	failOnError(err, "Failed to connect to ReadChannel")
+	err = reader.Connect(ch, []string{"rankcalculator.*", "valuator.*"})
+	failOnError(err, "Failed to connect to queue")
 
 	<-forever
 }

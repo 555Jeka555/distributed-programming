@@ -15,7 +15,7 @@ type Text struct {
 
 type TextRepository interface {
 	TextReadRepository
-	NextTextID(text string) TextID
+	GetTextID(text string) TextID
 }
 
 type TextReadRepository interface {

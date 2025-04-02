@@ -1,6 +1,26 @@
 version: '3.8'
 
 services:
+  eventslogger:
+    container_name: eventslogger
+    restart: always
+    build:
+      context: ./eventslogger
+      dockerfile: Dockerfile
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD-SHELL", "ps aux | grep [a]pp" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
   valuator1:
     container_name: valuator1
     restart: always
