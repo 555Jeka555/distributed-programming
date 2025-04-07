@@ -70,8 +70,6 @@ func (h *handler) Index(w http.ResponseWriter, _ *http.Request) {
 func (h *handler) SummaryCreate(w http.ResponseWriter, r *http.Request) {
 	textValue := r.FormValue("text")
 
-	// TODO передавать от сюда айдишники, и со страницы отправлять запросы на получение данных, убрать rcp и диспатчить событие из rankcalcualtor
-	// TODO опрашивать раз в секунду редис
 	body, err := json.Marshal(map[string]any{
 		"text": textValue,
 	})

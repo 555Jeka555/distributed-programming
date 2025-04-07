@@ -19,13 +19,13 @@ type Reader struct {
 
 func (r *Reader) Connect(channel *amqp.Channel, routingKeys []string) error {
 	err := channel.ExchangeDeclare(
-		"logs",  // name
-		"topic", // type
-		true,    // durable
-		false,   // auto-deleted
-		false,   // internal
-		false,   // no-wait
-		nil,     // arguments
+		"events", // name
+		"topic",  // type
+		true,     // durable
+		false,    // auto-deleted
+		false,    // internal
+		false,    // no-wait
+		nil,      // arguments
 	)
 	if err != nil {
 		return err
@@ -47,7 +47,7 @@ func (r *Reader) Connect(channel *amqp.Channel, routingKeys []string) error {
 		err = channel.QueueBind(
 			q.Name,     // queue name
 			routingKey, // routing key
-			"logs",     // exchange
+			"events",   // exchange
 			false,
 			nil,
 		)

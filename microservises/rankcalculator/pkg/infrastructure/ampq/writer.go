@@ -23,13 +23,13 @@ type writer struct {
 
 func (w *writer) WriteExchange(evt event.Event) error {
 	err := w.channel.ExchangeDeclare(
-		"logs",  // name
-		"topic", // type
-		true,    // durable
-		false,   // auto-deleted
-		false,   // internal
-		false,   // no-wait
-		nil,     // arguments
+		"events", // name
+		"topic",  // type
+		true,     // durable
+		false,    // auto-deleted
+		false,    // internal
+		false,    // no-wait
+		nil,      // arguments
 	)
 	failOnError(err, "Failed to declare an exchange")
 
@@ -37,7 +37,7 @@ func (w *writer) WriteExchange(evt event.Event) error {
 	defer cancel()
 
 	err = w.channel.PublishWithContext(ctx,
-		"logs",     // exchange
+		"events",   // exchange
 		evt.Type(), // routing key
 		false,      // mandatory
 		false,      // immediate

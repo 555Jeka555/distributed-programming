@@ -19,7 +19,7 @@ func main() {
 
 	handler := handler.NewHandler()
 	integrationEventHandler := ampq.NewIntegrationEventHandler(handler)
-	reader := ampq.NewReader("logs", integrationEventHandler)
+	reader := ampq.NewReader("events.eventslogger", integrationEventHandler)
 
 	var forever chan struct{}
 
