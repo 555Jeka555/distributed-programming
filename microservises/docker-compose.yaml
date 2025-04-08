@@ -6,13 +6,11 @@ services:
     container_name: centrifugo
     restart: always
     ports:
-      - "8000:8000"  # HTTP API и WebSocket
-      - "3000:3000"  # Centrifugo admin interface (опционально)
+      - "8000:8000"
+      - "3000:3000"
     environment:
       - CENTRIFUGO_ADMIN_PASSWORD=admin_password
       - CENTRIFUGO_ADMIN_SECRET=admin_secret
-#      - CENTRIFUGO_API_KEY=api_key
-#      - CENTRIFUGO_SECRET_KEY=secret_key
     networks:
       - app-network
     healthcheck:

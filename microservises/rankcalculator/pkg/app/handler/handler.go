@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"errors"
+	"math/rand"
 	"server/pkg/app/provider"
 	"time"
 
@@ -32,7 +33,7 @@ type handler struct {
 }
 
 func (h *handler) Handle(ctx context.Context, body string) error {
-	delay := time.Duration(3) * time.Second
+	delay := time.Duration(rand.Intn(2)+3) * time.Second
 	time.Sleep(delay)
 
 	err := h.rankCalculator.AddText(ctx, body)
