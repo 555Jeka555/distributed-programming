@@ -32,7 +32,7 @@ func main() {
 	rankCalculatorService := service.NewRankCalculatorService(rankCalculatorRepo, writer)
 
 	centrifugoClient := centrifugo.NewCentrifugoClient()
-	textProvider := provider.NewTextProvider()
+	textProvider := provider.NewTextProvider(rdb)
 	handler := handler.NewHandler(rankCalculatorService, textProvider, centrifugoClient)
 	integrationEventHandler := ampq.NewIntegrationEventHandler(handler)
 	reader := ampq.NewReader("text", integrationEventHandler)

@@ -55,10 +55,10 @@
 </head>
 <body>
 <h1>Text Summary</h1>
-<p>Text: {{.Text}}</p>
 
 <div id="result">
     {{if .Rank}}
+    <p>Text: {{.Text}}</p>
     <p>Rank: {{.Rank}}</p>
     <p>Similarity: {{.Similarity}}</p>
     {{else}}
@@ -72,11 +72,9 @@
     const processingId = "{{.ProcessingID}}";
     const centrifugoToken = "{{.CentrifugoToken}}";
 
-    // Проверяем, есть ли уже данные (если есть - не подписываемся)
     const hasResults = {{if .Rank}}true{{else}}false{{end}};
 
     if (!hasResults) {
-        // Ждем, пока Centrifuge не будет определен
         const checkCentrifuge = setInterval(() => {
             if (typeof Centrifuge !== 'undefined') {
                 clearInterval(checkCentrifuge);
@@ -86,7 +84,6 @@
     }
 
     function initializeCentrifuge() {
-        // Подключаемся к Centrifugo
         const centrifuge = new Centrifuge(
             centrifugoUrl,
             {
@@ -94,35 +91,29 @@
             }
         );
 
-        // Флаг для отслеживания состояния подписки
         let isSubscribed = false;
-
-        // Подписываемся на канал с результатами
         const subscription = centrifuge.newSubscription(channel);
 
-        // Обработчик успешной подписки
         subscription.on('subscribed', function() {
             console.log('Successfully subscribed to channel:', channel);
             isSubscribed = true;
         });
 
-        // Обработчик ошибки подписки
         subscription.on('error', function(err) {
             console.error('Subscription error:', err);
             if (err.code === 105) { // Код 105 = "already subscribed"
                 console.log('Already subscribed, ignoring...');
                 return;
             }
-            // Другие ошибки можно обработать здесь
         });
 
-        // Обработчик входящих сообщений
         subscription.on('publication', function(ctx) {
             console.log('publication', ctx)
             const data = ctx.data;
             if (data.textID === processingId) {
                 // Обновляем страницу с полученными данными
                 document.getElementById('result').innerHTML = `
+                    <p>Text: ${data.textValue}</p>
                     <p>Rank: ${data.rank}</p>
                     <p>Similarity: ${data.similarity}</p>
                 `;
@@ -136,7 +127,6 @@
             }
         });
 
-        // Обработчики состояния соединения
         centrifuge.on('connecting', function(ctx) {
             console.log('Connecting to Centrifugo...');
         });
@@ -153,7 +143,6 @@
             isSubscribed = false;
         });
 
-        // Запускаем соединение
         centrifuge.connect();
     }
 </script>

@@ -168,5 +168,6 @@ func generateCentrifugoToken(identifier string) string {
 		log.Printf("Ошибка генерации токена: %v", err)
 		return ""
 	}
+
 	return signedToken
 }

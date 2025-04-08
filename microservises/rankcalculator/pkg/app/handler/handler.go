@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"errors"
-	"fmt"
 	"server/pkg/app/provider"
 	"time"
 
@@ -42,19 +41,16 @@ func (h *handler) Handle(ctx context.Context, body string) error {
 	}
 
 	textID := h.textProvider.GetTextID(body)
-	fmt.Println("textID", textID)
-	fmt.Println("textID", textID)
-	fmt.Println("textID", textID)
-
-	channel := "results"
-	err = h.centrifugoClient.Publish(channel, map[string]interface{}{
-		"textID":     textID,
-		"similarity": 12,
-		"rank":       23,
-	})
+	textData, err := h.textProvider.GetByTextID(ctx, textID)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	channel := "results"
+	return h.centrifugoClient.Publish(channel, map[string]interface{}{
+		"textID":     textID,
+		"textValue":  textData.Value,
+		"similarity": textData.Similarity,
+		"rank":       textData.Rank,
+	})
 }
