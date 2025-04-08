@@ -18,6 +18,7 @@ func (c *centrifugoClient) Publish(channel string, data interface{}) error {
 	url := "http://centrifugo:8000/api/publish"
 
 	payload := map[string]interface{}{
+		"method":  "publish",
 		"channel": channel,
 		"data":    data,
 	}
@@ -33,7 +34,7 @@ func (c *centrifugoClient) Publish(channel string, data interface{}) error {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "_salt") // Замените на ваш API ключ
+	req.Header.Set("Authorization", "apikey _salt") // Замените на ваш API ключ
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

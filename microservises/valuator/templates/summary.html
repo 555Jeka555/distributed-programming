@@ -118,6 +118,7 @@
 
         // Обработчик входящих сообщений
         subscription.on('publication', function(ctx) {
+            console.log('publication', ctx)
             const data = ctx.data;
             if (data.textID === processingId) {
                 // Обновляем страницу с полученными данными

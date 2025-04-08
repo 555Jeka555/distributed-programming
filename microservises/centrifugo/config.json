@@ -9,8 +9,6 @@
     "key": "_salt"
   },
   "admin": {
-    "password": "password",
-    "secret": "secret",
     "enabled": true
   },
   "namespaces": [

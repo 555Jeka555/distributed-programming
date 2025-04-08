@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/rand"
 	"server/pkg/app/provider"
 	"time"
 
@@ -34,7 +33,7 @@ type handler struct {
 }
 
 func (h *handler) Handle(ctx context.Context, body string) error {
-	delay := time.Duration(rand.Intn(12)+3) * time.Second
+	delay := time.Duration(3) * time.Second
 	time.Sleep(delay)
 
 	err := h.rankCalculator.AddText(ctx, body)
@@ -42,12 +41,14 @@ func (h *handler) Handle(ctx context.Context, body string) error {
 		return err
 	}
 
-	//textID := h.textProvider.GetTextID(body)
+	textID := h.textProvider.GetTextID(body)
+	fmt.Println("textID", textID)
+	fmt.Println("textID", textID)
+	fmt.Println("textID", textID)
 
 	channel := "results"
-	fmt.Println("Rank Channel", channel)
 	err = h.centrifugoClient.Publish(channel, map[string]interface{}{
-		"textID":     body,
+		"textID":     textID,
 		"similarity": 12,
 		"rank":       23,
 	})

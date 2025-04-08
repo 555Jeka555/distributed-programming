@@ -11,8 +11,8 @@ services:
     environment:
       - CENTRIFUGO_ADMIN_PASSWORD=admin_password
       - CENTRIFUGO_ADMIN_SECRET=admin_secret
-      - CENTRIFUGO_API_KEY=api_key
-      - CENTRIFUGO_SECRET_KEY=secret_key
+#      - CENTRIFUGO_API_KEY=api_key
+#      - CENTRIFUGO_SECRET_KEY=secret_key
     networks:
       - app-network
     healthcheck:

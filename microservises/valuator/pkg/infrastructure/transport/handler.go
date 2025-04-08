@@ -113,13 +113,12 @@ func (h *handler) Summary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	channel := "results"
-	fmt.Println("Channel", channel)
 	data := SummaryData{
 		Text:            text.Value,
 		Rank:            text.Rank,
 		Similarity:      text.Similarity,
 		CentrifugoToken: generateCentrifugoToken(ip),
-		CentrifugoURL:   "ws://localhost:8080/connection/websocket",
+		CentrifugoURL:   "ws://localhost:8000/connection/websocket",
 		Channel:         channel,
 		ProcessingID:    textID,
 	}
