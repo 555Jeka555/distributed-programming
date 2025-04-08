@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/centrifuge/dist/centrifuge.js"></script>
     <title>Результат обработки</title>
     <style>
         body {
@@ -53,12 +54,107 @@
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>Результат обработки текста</h1>
-    <p><strong>Текст:</strong> {{.Text}}</p>
-    <p><strong>Рейтинг (rank):</strong> {{.Rank}}</p>
-    <p><strong>Похожесть (similarity):</strong> {{.Similarity}}</p>
-    <a href="/">Вернуться на главную</a>
+<h1>Text Summary</h1>
+<p>Text: {{.Text}}</p>
+
+<div id="result">
+    {{if .Rank}}
+    <p>Rank: {{.Rank}}</p>
+    <p>Similarity: {{.Similarity}}</p>
+    {{else}}
+    <p>Processing your request... Please wait.</p>
+    {{end}}
 </div>
+
+<script>
+    const centrifugoUrl = "{{.CentrifugoURL}}";
+    const channel = "{{.Channel}}";
+    const processingId = "{{.ProcessingID}}";
+    const centrifugoToken = "{{.CentrifugoToken}}";
+
+    // Проверяем, есть ли уже данные (если есть - не подписываемся)
+    const hasResults = {{if .Rank}}true{{else}}false{{end}};
+
+    if (!hasResults) {
+        // Ждем, пока Centrifuge не будет определен
+        const checkCentrifuge = setInterval(() => {
+            if (typeof Centrifuge !== 'undefined') {
+                clearInterval(checkCentrifuge);
+                initializeCentrifuge();
+            }
+        }, 50);
+    }
+
+    function initializeCentrifuge() {
+        // Подключаемся к Centrifugo
+        const centrifuge = new Centrifuge(
+            centrifugoUrl,
+            {
+                token: centrifugoToken
+            }
+        );
+
+        // Флаг для отслеживания состояния подписки
+        let isSubscribed = false;
+
+        // Подписываемся на канал с результатами
+        const subscription = centrifuge.newSubscription(channel);
+
+        // Обработчик успешной подписки
+        subscription.on('subscribed', function() {
+            console.log('Successfully subscribed to channel:', channel);
+            isSubscribed = true;
+        });
+
+        // Обработчик ошибки подписки
+        subscription.on('error', function(err) {
+            console.error('Subscription error:', err);
+            if (err.code === 105) { // Код 105 = "already subscribed"
+                console.log('Already subscribed, ignoring...');
+                return;
+            }
+            // Другие ошибки можно обработать здесь
+        });
+
+        // Обработчик входящих сообщений
+        subscription.on('publication', function(ctx) {
+            const data = ctx.data;
+            if (data.textID === processingId) {
+                // Обновляем страницу с полученными данными
+                document.getElementById('result').innerHTML = `
+                    <p>Rank: ${data.rank}</p>
+                    <p>Similarity: ${data.similarity}</p>
+                `;
+
+                // Отписываемся после получения результата
+                if (isSubscribed) {
+                    subscription.unsubscribe();
+                    centrifuge.disconnect();
+                    isSubscribed = false;
+                }
+            }
+        });
+
+        // Обработчики состояния соединения
+        centrifuge.on('connecting', function(ctx) {
+            console.log('Connecting to Centrifugo...');
+        });
+
+        centrifuge.on('connected', function(ctx) {
+            console.log('Connected to Centrifugo');
+            if (!isSubscribed) {
+                subscription.subscribe();
+            }
+        });
+
+        centrifuge.on('disconnected', function(ctx) {
+            console.log('Disconnected from Centrifugo');
+            isSubscribed = false;
+        });
+
+        // Запускаем соединение
+        centrifuge.connect();
+    }
+</script>
 </body>
 </html>

@@ -1,6 +1,28 @@
 version: '3.8'
 
 services:
+  centrifugo:
+    image: centrifugo/centrifugo:latest
+    container_name: centrifugo
+    restart: always
+    ports:
+      - "8000:8000"  # HTTP API и WebSocket
+      - "3000:3000"  # Centrifugo admin interface (опционально)
+    environment:
+      - CENTRIFUGO_ADMIN_PASSWORD=admin_password
+      - CENTRIFUGO_ADMIN_SECRET=admin_secret
+      - CENTRIFUGO_API_KEY=api_key
+      - CENTRIFUGO_SECRET_KEY=secret_key
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - ./centrifugo/config.json:/centrifugo/config.json
+
   eventslogger:
     container_name: eventslogger
     restart: always
@@ -44,6 +66,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+#      centrifugo:
+#        condition: service_healthy
 
   valuator2:
     container_name: valuator2
@@ -68,6 +92,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+#      centrifugo:
+#        condition: service_healthy
 
   rankcalculator:
     container_name: rankcalculator
@@ -85,6 +111,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+#      centrifugo:
+#        condition: service_healthy
 
   nginx:
     image: nginx:alpine
@@ -101,6 +129,7 @@ services:
     depends_on:
       - valuator1
       - valuator2
+      - centrifugo
 
   redis:
     container_name: redis

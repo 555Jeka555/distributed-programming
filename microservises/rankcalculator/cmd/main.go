@@ -8,6 +8,8 @@ import (
 	"server/pkg/app/handler"
 	"server/pkg/app/service"
 	"server/pkg/infrastructure/ampq"
+	"server/pkg/infrastructure/centrifugo"
+	"server/pkg/infrastructure/redis/provider"
 	"server/pkg/infrastructure/redis/repo"
 )
 
@@ -29,7 +31,9 @@ func main() {
 	rankCalculatorRepo := repo.NewTextRepository(rdb)
 	rankCalculatorService := service.NewRankCalculatorService(rankCalculatorRepo, writer)
 
-	handler := handler.NewHandler(rankCalculatorService)
+	centrifugoClient := centrifugo.NewCentrifugoClient()
+	textProvider := provider.NewTextProvider()
+	handler := handler.NewHandler(rankCalculatorService, textProvider, centrifugoClient)
 	integrationEventHandler := ampq.NewIntegrationEventHandler(handler)
 	reader := ampq.NewReader("text", integrationEventHandler)
 

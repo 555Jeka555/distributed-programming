@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/dgrijalva/jwt-go"
 	"html/template"
 	"log"
 	"net/http"
 	"server/pkg/app/event"
 	"server/pkg/app/query"
 	"server/pkg/app/service"
+	"time"
 )
 
 type Handler interface {
@@ -25,9 +27,13 @@ type Response struct {
 }
 
 type SummaryData struct {
-	Text       string
-	Rank       float64
-	Similarity int
+	Text            string
+	Rank            float64
+	Similarity      int
+	CentrifugoURL   string
+	CentrifugoToken string
+	Channel         string
+	ProcessingID    string
 }
 
 func NewHandler(
@@ -101,10 +107,21 @@ func (h *handler) Summary(w http.ResponseWriter, r *http.Request) {
 		log.Panic(err)
 	}
 
+	ip := r.Header.Get("X-Forwarded-For")
+	if ip == "" {
+		ip = r.RemoteAddr
+	}
+
+	channel := "results"
+	fmt.Println("Channel", channel)
 	data := SummaryData{
-		Text:       text.Value,
-		Rank:       text.Rank,
-		Similarity: text.Similarity,
+		Text:            text.Value,
+		Rank:            text.Rank,
+		Similarity:      text.Similarity,
+		CentrifugoToken: generateCentrifugoToken(ip),
+		CentrifugoURL:   "ws://localhost:8080/connection/websocket",
+		Channel:         channel,
+		ProcessingID:    textID,
 	}
 
 	tmplParsed, err := template.ParseFiles("./templates/summary.html")
@@ -137,4 +154,20 @@ func (h *handler) About(w http.ResponseWriter, _ *http.Request) {
 	if err != nil {
 		log.Panic(err)
 	}
+}
+
+func generateCentrifugoToken(identifier string) string {
+	claims := jwt.MapClaims{
+		"sub":      identifier,
+		"exp":      time.Now().Add(24 * time.Hour).Unix(),
+		"channels": []string{"results"},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, err := token.SignedString([]byte("my_secret"))
+	if err != nil {
+		log.Printf("Ошибка генерации токена: %v", err)
+		return ""
+	}
+	return signedToken
 }
