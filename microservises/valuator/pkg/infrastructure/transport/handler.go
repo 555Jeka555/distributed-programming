@@ -112,12 +112,12 @@ func (h *handler) Summary(w http.ResponseWriter, r *http.Request) {
 		ip = r.RemoteAddr
 	}
 
-	channel := "results"
+	channel := "personal#" + textID
 	data := SummaryData{
 		Text:            text.Value,
 		Rank:            text.Rank,
 		Similarity:      text.Similarity,
-		CentrifugoToken: generateCentrifugoToken(ip),
+		CentrifugoToken: generateCentrifugoToken(ip, channel),
 		CentrifugoURL:   "ws://localhost:8000/connection/websocket",
 		Channel:         channel,
 		ProcessingID:    textID,
@@ -155,11 +155,11 @@ func (h *handler) About(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-func generateCentrifugoToken(identifier string) string {
+func generateCentrifugoToken(identifier string, channel string) string {
 	claims := jwt.MapClaims{
 		"sub":      identifier,
 		"exp":      time.Now().Add(24 * time.Hour).Unix(),
-		"channels": []string{"results"},
+		"channels": []string{channel},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

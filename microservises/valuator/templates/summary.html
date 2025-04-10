@@ -176,16 +176,12 @@
     const processingId = "{{.ProcessingID}}";
     const centrifugoToken = "{{.CentrifugoToken}}";
 
-    const hasResults = {{if .Rank}}true{{else}}false{{end}};
-
-    if (!hasResults) {
-        const checkCentrifuge = setInterval(() => {
-            if (typeof Centrifuge !== 'undefined') {
-                clearInterval(checkCentrifuge);
-                initializeCentrifuge();
-            }
-        }, 50);
-    }
+    const checkCentrifuge = setInterval(() => {
+        if (typeof Centrifuge !== 'undefined') {
+            clearInterval(checkCentrifuge);
+            initializeCentrifuge();
+        }
+    }, 50);
 
     function initializeCentrifuge() {
         const centrifuge = new Centrifuge(

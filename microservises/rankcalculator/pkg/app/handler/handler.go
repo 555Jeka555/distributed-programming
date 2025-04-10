@@ -47,7 +47,7 @@ func (h *handler) Handle(ctx context.Context, body string) error {
 		return err
 	}
 
-	channel := "results"
+	channel := "personal#" + textID
 	return h.centrifugoClient.Publish(channel, map[string]interface{}{
 		"textID":     textID,
 		"textValue":  textData.Value,
