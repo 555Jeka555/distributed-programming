@@ -14,9 +14,15 @@ import (
 )
 
 func main() {
-	rdb := redis.NewClient(&redis.Options{
-		Addr: os.Getenv("REDIS_URL"),
+	mainRdb := redis.NewClient(&redis.Options{
+		Addr: os.Getenv("REDIS_MAIN_URL"),
 	})
+
+	shards := map[string]*redis.Client{
+		"RU":   redis.NewClient(&redis.Options{Addr: os.Getenv("REDIS_RU_URL")}),
+		"EU":   redis.NewClient(&redis.Options{Addr: os.Getenv("REDIS_EU_URL")}),
+		"ASIA": redis.NewClient(&redis.Options{Addr: os.Getenv("REDIS_ASIA_URL")}),
+	}
 
 	conn, err := amqp.Dial(os.Getenv("RABBITMQ_URL"))
 	failOnError(err, "Failed to connect to RabbitMQ")
@@ -28,11 +34,22 @@ func main() {
 
 	writer := ampq.NewWriter(ch)
 
-	rankCalculatorRepo := repo.NewTextRepository(rdb)
+	shardManager := repo.NewShardManager(
+		mainRdb,
+		shards,
+		map[string]string{
+			"RU": "RU",
+			"FR": "EU",
+			"DE": "EU",
+			"AE": "ASIA",
+			"IN": "ASIA",
+		},
+	)
+	rankCalculatorRepo := repo.NewShardTextRepository(shardManager)
 	rankCalculatorService := service.NewRankCalculatorService(rankCalculatorRepo, writer)
 
 	centrifugoClient := centrifugo.NewCentrifugoClient()
-	textProvider := provider.NewTextProvider(rdb)
+	textProvider := provider.NewTextProvider(rankCalculatorRepo)
 	handler := handler.NewHandler(rankCalculatorService, textProvider, centrifugoClient)
 	integrationEventHandler := ampq.NewIntegrationEventHandler(handler)
 	reader := ampq.NewReader("text", integrationEventHandler)

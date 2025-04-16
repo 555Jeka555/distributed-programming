@@ -6,18 +6,18 @@ import (
 	"encoding/hex"
 	"errors"
 	"github.com/go-redis/redis/v8"
+	"server/pkg/app/model"
 	"server/pkg/app/provider"
-	"server/pkg/infrastructure/keyvalue"
 )
 
-func NewTextProvider(rdb *redis.Client) provider.TextProvider {
+func NewTextProvider(textReadRepo model.TextReadRepository) provider.TextProvider {
 	return &textProvider{
-		storage: keyvalue.NewStorage[textSerializable](rdb),
+		textReadRepo: textReadRepo,
 	}
 }
 
 type textProvider struct {
-	storage keyvalue.Storage[textSerializable]
+	textReadRepo model.TextReadRepository
 }
 
 type textSerializable struct {
@@ -32,7 +32,7 @@ func (p *textProvider) GetTextID(text string) string {
 }
 
 func (p *textProvider) GetByTextID(ctx context.Context, textID string) (provider.TextData, error) {
-	text, err := p.storage.Get(ctx, string(textID))
+	text, err := p.textReadRepo.FindByID(ctx, model.TextID(textID))
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return provider.TextData{}, nil
@@ -41,9 +41,9 @@ func (p *textProvider) GetByTextID(ctx context.Context, textID string) (provider
 	}
 
 	return provider.TextData{
-		Rank:       text.Rank,
-		Similarity: text.Similarity,
-		Value:      text.Value,
+		Rank:       text.Rank(),
+		Similarity: text.Similarity(),
+		Value:      text.Value(),
 	}, nil
 }
 

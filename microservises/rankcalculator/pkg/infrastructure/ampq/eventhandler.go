@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"server/pkg/app/handler"
+	"server/pkg/infrastructure/redis/repo"
 )
 
 type IntegrationEventHandler interface {
@@ -21,7 +22,8 @@ type integrationEventHandler struct {
 }
 
 type eventBody struct {
-	Text string `json:"text"`
+	Text   string `json:"text"`
+	Region string `json:"region"`
 }
 
 func (h *integrationEventHandler) Handle(ctx context.Context, body []byte) error {
@@ -32,5 +34,5 @@ func (h *integrationEventHandler) Handle(ctx context.Context, body []byte) error
 		return err
 	}
 
-	return h.handler.Handle(ctx, evt.Text)
+	return h.handler.Handle(context.WithValue(ctx, repo.RegionKey{}, evt.Region), evt.Text)
 }

@@ -3,6 +3,7 @@ package transport
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"html/template"
@@ -11,6 +12,7 @@ import (
 	"server/pkg/app/event"
 	"server/pkg/app/query"
 	"server/pkg/app/service"
+	"server/pkg/infrastructure/redis/repo"
 	"time"
 )
 
@@ -36,17 +38,23 @@ type SummaryData struct {
 	ProcessingID    string
 }
 
+type IndexData struct {
+	Countries map[string]string
+}
+
 func NewHandler(
 	ctx context.Context,
 	writer event.Writer,
 	textService service.TextService,
 	textQueryService query.TextQueryService,
+	regions map[string]string,
 ) Handler {
 	return &handler{
 		ctx:              ctx,
 		writer:           writer,
 		textService:      textService,
 		textQueryService: textQueryService,
+		regions:          regions,
 	}
 }
 
@@ -56,10 +64,21 @@ type handler struct {
 	writerExchange   event.Writer
 	textService      service.TextService
 	textQueryService query.TextQueryService
+	regions          map[string]string
 }
 
 func (h *handler) Index(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
+
+	data := IndexData{
+		Countries: map[string]string{
+			"RU": "Россия",
+			"FR": "Франция",
+			"DE": "Германия",
+			"AE": "ОАЭ",
+			"IN": "Индия",
+		},
+	}
 
 	tmplParsed, err := template.ParseFiles("./templates/index.html")
 	if err != nil {
@@ -67,7 +86,7 @@ func (h *handler) Index(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 
-	err = tmplParsed.Execute(w, nil)
+	err = tmplParsed.Execute(w, data)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -75,9 +94,11 @@ func (h *handler) Index(w http.ResponseWriter, _ *http.Request) {
 
 func (h *handler) SummaryCreate(w http.ResponseWriter, r *http.Request) {
 	textValue := r.FormValue("text")
+	county := r.FormValue("country")
 
 	body, err := json.Marshal(map[string]any{
-		"text": textValue,
+		"text":   textValue,
+		"region": h.regions[county],
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -103,7 +124,7 @@ func (h *handler) Summary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	text, err := h.textQueryService.GetTextByID(h.ctx, textID)
-	if err != nil {
+	if err != nil && !errors.Is(err, repo.NotFoundRegion) {
 		log.Panic(err)
 	}
 

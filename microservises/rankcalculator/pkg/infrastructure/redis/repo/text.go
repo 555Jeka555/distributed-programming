@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"github.com/go-redis/redis/v8"
 	"server/pkg/app/model"
 	"server/pkg/infrastructure/keyvalue"
@@ -28,6 +29,23 @@ type textRepository struct {
 
 func (t *textRepository) GetTextID(text string) model.TextID {
 	return model.TextID(hashText(text))
+}
+
+func (t *textRepository) FindByID(ctx context.Context, textID model.TextID) (model.Text, error) {
+	text, err := t.storage.Get(ctx, string(textID))
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return model.Text{}, nil
+		}
+		return model.Text{}, err
+	}
+
+	return model.LoadText(
+		model.TextID(text.TextID),
+		text.Similarity,
+		text.Value,
+		text.Rank,
+	), nil
 }
 
 func (t *textRepository) Store(ctx context.Context, text model.Text) error {

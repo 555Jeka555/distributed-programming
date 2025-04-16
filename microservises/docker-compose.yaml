@@ -49,7 +49,10 @@ services:
       dockerfile: Dockerfile
     environment:
       - LISTENING_SERVER_PORT=:8080
-      - REDIS_URL=redis:6379
+      - REDIS_MAIN_URL=redis-main:6379
+      - REDIS_RU_URL=redis-ru:6379
+      - REDIS_EU_URL=redis-eu:6379
+      - REDIS_ASIA_URL=redis-asia:6379
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     healthcheck:
       test: ["CMD", "curl", "-f", "https://127.0.0.1:8080/"]
@@ -60,12 +63,10 @@ services:
     networks:
       - app-network
     depends_on:
-      redis:
+      redis-main:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-#      centrifugo:
-#        condition: service_healthy
 
   valuator2:
     container_name: valuator2
@@ -75,7 +76,10 @@ services:
       dockerfile: Dockerfile
     environment:
       - LISTENING_SERVER_PORT=:8080
-      - REDIS_URL=redis:6379
+      - REDIS_MAIN_URL=redis-main:6379
+      - REDIS_RU_URL=redis-ru:6379
+      - REDIS_EU_URL=redis-eu:6379
+      - REDIS_ASIA_URL=redis-asia:6379
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     healthcheck:
       test: [ "CMD", "curl", "-f", "https://127.0.0.1:8080/" ]
@@ -86,12 +90,10 @@ services:
     networks:
       - app-network
     depends_on:
-      redis:
+      redis-main:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-#      centrifugo:
-#        condition: service_healthy
 
   rankcalculator:
     container_name: rankcalculator
@@ -100,17 +102,18 @@ services:
       context: ./rankcalculator
       dockerfile: Dockerfile
     environment:
-      - REDIS_URL=redis:6379
+      - REDIS_MAIN_URL=redis-main:6379
+      - REDIS_RU_URL=redis-ru:6379
+      - REDIS_EU_URL=redis-eu:6379
+      - REDIS_ASIA_URL=redis-asia:6379
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     networks:
       - app-network
     depends_on:
-      redis:
+      redis-main:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-#      centrifugo:
-#        condition: service_healthy
 
   nginx:
     image: nginx:alpine
@@ -129,13 +132,68 @@ services:
       - valuator2
       - centrifugo
 
-  redis:
-    container_name: redis
+  redis-main:
+    container_name: redis-main
     image: "redis:latest"
     ports:
-      - "6379:6379"
+      - "6000:6379"
     volumes:
-      - redis_data:/data
+      - redis_main_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - app-network
+    depends_on:
+      redis-ru:
+        condition: service_healthy
+      redis-eu:
+        condition: service_healthy
+      redis-asia:
+        condition: service_healthy
+
+  redis-ru:
+    container_name: redis-ru
+    image: "redis:latest"
+    ports:
+      - "6001:6379"
+    volumes:
+      - redis_ru_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - app-network
+
+  redis-eu:
+    container_name: redis-eu
+    image: "redis:latest"
+    ports:
+      - "6002:6379"
+    volumes:
+      - redis_eu_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - app-network
+
+  redis-asia:
+    container_name: redis-asia
+    image: "redis:latest"
+    ports:
+      - "6003:6379"
+    volumes:
+      - redis_asia_data:/data
     command: redis-server --appendonly yes
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
@@ -166,5 +224,8 @@ networks:
   app-network:
 
 volumes:
-  redis_data:
+  redis_main_data:
+  redis_ru_data:
+  redis_eu_data:
+  redis_asia_data:
   rabbitmq_data:
