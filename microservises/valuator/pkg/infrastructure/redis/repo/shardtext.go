@@ -3,9 +3,6 @@ package repo
 import (
 	"context"
 	"errors"
-	"fmt"
-	"github.com/go-redis/redis/v8"
-	"log"
 	"server/pkg/app/model"
 )
 
@@ -28,29 +25,10 @@ func (t *shardTextRepository) GetTextID(text string) model.TextID {
 }
 
 func (t *shardTextRepository) FindByID(ctx context.Context, textID model.TextID) (model.Text, error) {
-	repo, err := t.getRepo(ctx, textID)
+	repo, err := t.shardManager.GetRepo(ctx, textID)
 	if err != nil {
 		return model.Text{}, err
 	}
 
 	return repo.FindByID(ctx, textID)
-}
-
-func (t *shardTextRepository) getRepo(ctx context.Context, textID model.TextID) (model.TextRepository, error) {
-	region, err := t.shardManager.mainClient.Get(ctx, fmt.Sprintf("text_region:%s", textID)).Result()
-	if err != nil {
-		if errors.Is(err, redis.Nil) {
-			return nil, NotFoundRegion
-		}
-		return nil, err
-	}
-	shard, err := t.shardManager.GetShard(region)
-	if err != nil {
-		return nil, err
-	}
-	log.Println()
-	log.Printf("LOOKUP: %s, %s", textID, region)
-	log.Println()
-
-	return NewTextRepository(shard), nil
 }
