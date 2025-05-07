@@ -2,11 +2,10 @@ package page
 
 import (
 	"fmt"
+	"test/end2end/config"
 	"time"
 
 	"github.com/tebeka/selenium"
-
-	"test/end2end/config"
 )
 
 type Common struct {
@@ -23,7 +22,7 @@ func (c *Common) OpenPage(url string) error {
 	return c.driver.Get(c.baseURL + url)
 }
 
-func (c *Common) WaitWithTimeoutAndInterval(currentURL string) error {
+func (c *Common) WaitWithTimeoutAndInterval(currentURL string) (string, error) {
 	err := c.driver.WaitWithTimeoutAndInterval(func(wd selenium.WebDriver) (bool, error) {
 		url, err := wd.CurrentURL()
 		if err != nil {
@@ -33,7 +32,7 @@ func (c *Common) WaitWithTimeoutAndInterval(currentURL string) error {
 		return url != "", nil
 	}, 10*time.Second, 500*time.Millisecond)
 
-	return err
+	return currentURL, err
 }
 
 func (c *Common) findElement(by, value string) (selenium.WebElement, error) {

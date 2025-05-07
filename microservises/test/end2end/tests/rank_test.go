@@ -3,8 +3,9 @@ package tests
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/tebeka/selenium"
-	"test/end2end/page"
+	"lab9/page"
 	"testing"
+	"time"
 )
 
 func TestRank(t *testing.T) {
@@ -12,19 +13,26 @@ func TestRank(t *testing.T) {
 		indexPage := page.Index{}
 		indexPage.Init(driver)
 
-		err := indexPage.OpenPage("")
+		err := indexPage.OpenPage("/")
 		assert.NoError(t, err, "Не удалось открыть главную страницу")
 
 		expectedText := "123a"
-		expectedRank := 0.4
-		expectedSimilarity := 0
+		expectedRank := 0.75
+		expectedSimilarity := 1
 		err = indexPage.InputText(expectedText)
 		assert.NoError(t, err, "Не удалось ввести текст")
 
+		err = indexPage.SelectRegion("AE")
+		assert.NoError(t, err, "Не удалось выбрать регион")
+
+		err = indexPage.SubmitText()
+		assert.NoError(t, err, "Не удалось отправить текст")
+
 		var currentURL string
-		err = indexPage.WaitWithTimeoutAndInterval(currentURL)
+		currentURL, err = indexPage.WaitWithTimeoutAndInterval(currentURL)
 		assert.NoError(t, err, "Не перейти на страницу")
 
+		time.Sleep(3 * time.Second)
 		summaryPage := page.Summary{}
 		summaryPage.Init(driver)
 

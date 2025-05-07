@@ -7,10 +7,10 @@ import (
 )
 
 const (
-	textAreaName          = "text"
-	selectRegionName      = "country"
-	optionRegionXPath     = ".//option[@value='%s']"
-	submitTextCSSSelector = "input[type='submit']"
+	textAreaCSSSelector     = "textarea[name='text']"
+	selectRegionCSSSelector = "select[name='country']"
+	optionRegionXPath       = ".//option[@value='%s']"
+	submitTextCSSSelector   = "input[type='submit']"
 )
 
 type Index struct {
@@ -18,7 +18,7 @@ type Index struct {
 }
 
 func (i *Index) InputText(text string) error {
-	textArea, err := i.findElement(selenium.ByName, textAreaName)
+	textArea, err := i.findElement(selenium.ByCSSSelector, textAreaCSSSelector)
 	if err != nil {
 		return err
 	}
@@ -31,7 +31,7 @@ func (i *Index) InputText(text string) error {
 }
 
 func (i *Index) SelectRegion(region string) error {
-	selectElement, err := i.findElement(selenium.ByName, selectRegionName)
+	selectElement, err := i.findElement(selenium.ByCSSSelector, selectRegionCSSSelector)
 	if err != nil {
 		return err
 	}

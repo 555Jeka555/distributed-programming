@@ -29,13 +29,13 @@ func (s *Summary) GetResultRank() (float64, error) {
 	return strconv.ParseFloat(val, 64)
 }
 
-func (s *Summary) GetResultSimilarity() (float64, error) {
+func (s *Summary) GetResultSimilarity() (int, error) {
 	val, err := s.getResultValue(resultSimilarityCSSSelector)
 	if err != nil {
 		return 0, err
 	}
 
-	return strconv.ParseFloat(val, 64)
+	return strconv.Atoi(val)
 }
 
 func (s *Summary) getResultValue(selector string) (string, error) {
