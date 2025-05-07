@@ -32,30 +32,37 @@ type rankCalculatorService struct {
 	publisher event.Publisher
 }
 
-func (v *rankCalculatorService) AddText(ctx context.Context, value string) error {
-	textID := v.repo.GetTextID(value)
-	alphabetCount, allCount := symbolStatistics(value)
-	rank := 1 - float64(alphabetCount)/float64(allCount)
+func (r *rankCalculatorService) AddText(ctx context.Context, value string) error {
+	textID := r.repo.GetTextID(value)
+	rank := calcRank(value)
 	text := model.NewText(textID, 0, value, rank)
 
-	err := v.repo.Store(ctx, text)
+	err := r.repo.Store(ctx, text)
 	if err != nil {
 		if errors.Is(err, ErrKeyAlreadyExists) {
-			err := v.repo.Delete(ctx, textID)
+			err := r.repo.Delete(ctx, textID)
 			if err != nil {
 				return err
 			}
 			text = model.NewText(textID, 1, value, rank)
 
-			return v.repo.Store(ctx, text)
+			return r.repo.Store(ctx, text)
 		}
 		log.Panic(err)
 	}
 
-	return v.publisher.PublishInExchange(event.RankCalculated{
+	return r.publisher.PublishInExchange(event.RankCalculated{
 		TextID: string(textID),
 		Rank:   rank,
 	})
+}
+
+func calcRank(value string) float64 {
+	alphabetCount, allCount := symbolStatistics(value)
+	if allCount == 0 {
+		return 0
+	}
+	return 1 - float64(alphabetCount)/float64(allCount)
 }
 
 func symbolStatistics(text string) (alphabetCount int, allCount int) {
