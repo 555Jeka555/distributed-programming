@@ -15,11 +15,11 @@ var ErrKeyAlreadyExists = errors.New("key already exists")
 
 func NewRankCalculatorService(
 	repo model.TextRepository,
-	write event.Writer,
+	publisher event.Publisher,
 ) RankCalculatorService {
 	return &rankCalculatorService{
-		repo:  repo,
-		write: write,
+		repo:      repo,
+		publisher: publisher,
 	}
 }
 
@@ -28,8 +28,8 @@ type RankCalculatorService interface {
 }
 
 type rankCalculatorService struct {
-	repo  model.TextRepository
-	write event.Writer
+	repo      model.TextRepository
+	publisher event.Publisher
 }
 
 func (v *rankCalculatorService) AddText(ctx context.Context, value string) error {
@@ -52,7 +52,7 @@ func (v *rankCalculatorService) AddText(ctx context.Context, value string) error
 		log.Panic(err)
 	}
 
-	return v.write.WriteExchange(event.RankCalculated{
+	return v.publisher.PublishInExchange(event.RankCalculated{
 		TextID: string(textID),
 		Rank:   rank,
 	})

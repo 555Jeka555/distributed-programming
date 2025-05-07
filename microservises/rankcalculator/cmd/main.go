@@ -32,7 +32,7 @@ func main() {
 	failOnError(err, "Failed to open a channel")
 	defer ch.Close()
 
-	writer := ampq.NewWriter(ch)
+	publisher := ampq.NewPublisher(ch)
 
 	shardManager := repo.NewShardManager(
 		mainRdb,
@@ -46,7 +46,7 @@ func main() {
 		},
 	)
 	rankCalculatorRepo := repo.NewShardTextRepository(shardManager)
-	rankCalculatorService := service.NewRankCalculatorService(rankCalculatorRepo, writer)
+	rankCalculatorService := service.NewRankCalculatorService(rankCalculatorRepo, publisher)
 
 	centrifugoClient := centrifugo.NewCentrifugoClient()
 	textProvider := provider.NewTextProvider(rankCalculatorRepo)

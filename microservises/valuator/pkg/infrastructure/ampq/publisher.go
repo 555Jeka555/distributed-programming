@@ -13,19 +13,19 @@ import (
 func NewWriter(
 	queueName string,
 	channel *amqp.Channel,
-) event.Writer {
-	return &writer{
+) event.Publisher {
+	return &publisher{
 		queueName: queueName,
 		channel:   channel,
 	}
 }
 
-type writer struct {
+type publisher struct {
 	queueName string
 	channel   *amqp.Channel
 }
 
-func (w *writer) Write(body []byte) error {
+func (w *publisher) Publish(body []byte) error {
 	q, err := w.channel.QueueDeclare(
 		"",    // name
 		true,  // durable
@@ -58,7 +58,7 @@ func (w *writer) Write(body []byte) error {
 	return err
 }
 
-func (w *writer) WriteExchange(evt event.Event) error {
+func (w *publisher) PublishInExchange(evt event.Event) error {
 	err := w.channel.ExchangeDeclare(
 		"events", // name
 		"topic",  // type

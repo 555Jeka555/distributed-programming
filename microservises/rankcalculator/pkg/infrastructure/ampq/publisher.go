@@ -3,25 +3,26 @@ package ampq
 import (
 	"context"
 	"encoding/json"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
-	"server/pkg/app/event"
 	"time"
+
+	amqp "github.com/rabbitmq/amqp091-go"
+	"server/pkg/app/event"
 )
 
-func NewWriter(
+func NewPublisher(
 	channel *amqp.Channel,
-) event.Writer {
-	return &writer{
+) event.Publisher {
+	return &publisher{
 		channel: channel,
 	}
 }
 
-type writer struct {
+type publisher struct {
 	channel *amqp.Channel
 }
 
-func (w *writer) WriteExchange(evt event.Event) error {
+func (w *publisher) PublishInExchange(evt event.Event) error {
 	err := w.channel.ExchangeDeclare(
 		"events", // name
 		"topic",  // type

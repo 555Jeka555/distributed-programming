@@ -44,14 +44,14 @@ type IndexData struct {
 
 func NewHandler(
 	ctx context.Context,
-	writer event.Writer,
+	publisher event.Publisher,
 	textService service.TextService,
 	textQueryService query.TextQueryService,
 	regions map[string]string,
 ) Handler {
 	return &handler{
 		ctx:              ctx,
-		writer:           writer,
+		publisher:        publisher,
 		textService:      textService,
 		textQueryService: textQueryService,
 		regions:          regions,
@@ -60,8 +60,7 @@ func NewHandler(
 
 type handler struct {
 	ctx              context.Context
-	writer           event.Writer
-	writerExchange   event.Writer
+	publisher        event.Publisher
 	textService      service.TextService
 	textQueryService query.TextQueryService
 	regions          map[string]string
@@ -104,7 +103,7 @@ func (h *handler) SummaryCreate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	err = h.writer.Write(body)
+	err = h.publisher.Publish(body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -155,7 +154,7 @@ func (h *handler) Summary(w http.ResponseWriter, r *http.Request) {
 		log.Panic(err)
 	}
 
-	err = h.writer.WriteExchange(event.SimilarityCalculated{
+	err = h.publisher.PublishInExchange(event.SimilarityCalculated{
 		TextID:     textID,
 		Similarity: text.Similarity,
 	})
