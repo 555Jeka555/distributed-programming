@@ -3,7 +3,7 @@ package tests
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/tebeka/selenium"
-	"lab9/page"
+	"test/end2end/page"
 	"testing"
 	"time"
 )
