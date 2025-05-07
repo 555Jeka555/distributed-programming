@@ -51,8 +51,8 @@ func (m *MockPublisher) PublishInExchange(ev event.Event) error {
 	return args.Error(0)
 }
 
-func TestRankCalculatorService_AddText_WithTestifyMock(t *testing.T) {
-	type fields struct {
+func TestRankCalculatorService_AddText(t *testing.T) {
+	type expectedErrors struct {
 		storeErr   error
 		deleteErr  error
 		publishErr error
@@ -61,64 +61,64 @@ func TestRankCalculatorService_AddText_WithTestifyMock(t *testing.T) {
 		value string
 	}
 	tests := []struct {
-		name         string
-		fields       fields
-		args         args
-		wantRank     float64
-		wantErr      bool
-		wantDelete   bool
-		wantStoreCnt int
-		wantPublish  bool
+		name           string
+		expectedErrors expectedErrors
+		args           args
+		wantRank       float64
+		wantErr        bool
+		wantDelete     bool
+		wantStoreCnt   int
+		wantPublish    bool
 	}{
 		{
-			name:         "Обычный кейс - только буквы",
-			fields:       fields{},
-			args:         args{value: "abcXYZ"},
-			wantRank:     0,
-			wantErr:      false,
-			wantDelete:   false,
-			wantStoreCnt: 1,
-			wantPublish:  true,
+			name:           "Обычный кейс - только буквы",
+			expectedErrors: expectedErrors{},
+			args:           args{value: "abcXYZ"},
+			wantRank:       0,
+			wantErr:        false,
+			wantDelete:     false,
+			wantStoreCnt:   1,
+			wantPublish:    true,
 		},
 		{
-			name:         "Кейс с Emoji",
-			fields:       fields{},
-			args:         args{value: "a😀b"},
-			wantRank:     1 - 2.0/3.0,
-			wantErr:      false,
-			wantDelete:   false,
-			wantStoreCnt: 1,
-			wantPublish:  true,
+			name:           "Кейс с Emoji",
+			expectedErrors: expectedErrors{},
+			args:           args{value: "a😀b"},
+			wantRank:       1 - 2.0/3.0,
+			wantErr:        false,
+			wantDelete:     false,
+			wantStoreCnt:   1,
+			wantPublish:    true,
 		},
 		{
-			name:         "Кейс: ключ уже есть, удаляем и заново сохраняем",
-			fields:       fields{storeErr: ErrKeyAlreadyExists},
-			args:         args{value: "abc"},
-			wantRank:     0,
-			wantErr:      false,
-			wantDelete:   true,
-			wantStoreCnt: 2,
-			wantPublish:  false,
+			name:           "Кейс: ключ уже есть, удаляем и заново сохраняем",
+			expectedErrors: expectedErrors{storeErr: ErrKeyAlreadyExists},
+			args:           args{value: "abc"},
+			wantRank:       0,
+			wantErr:        false,
+			wantDelete:     true,
+			wantStoreCnt:   2,
+			wantPublish:    false,
 		},
 		{
-			name:         "Кейс: ошибка при удалении",
-			fields:       fields{storeErr: ErrKeyAlreadyExists, deleteErr: errors.New("del error")},
-			args:         args{value: "abc"},
-			wantRank:     0,
-			wantErr:      true,
-			wantDelete:   true,
-			wantStoreCnt: 1,
-			wantPublish:  false,
+			name:           "Кейс: ошибка при удалении",
+			expectedErrors: expectedErrors{storeErr: ErrKeyAlreadyExists, deleteErr: errors.New("del error")},
+			args:           args{value: "abc"},
+			wantRank:       0,
+			wantErr:        true,
+			wantDelete:     true,
+			wantStoreCnt:   1,
+			wantPublish:    false,
 		},
 		{
-			name:         "Кейс: ошибка при публикации",
-			fields:       fields{publishErr: errors.New("pub error")},
-			args:         args{value: "abc"},
-			wantRank:     0,
-			wantErr:      true,
-			wantDelete:   false,
-			wantStoreCnt: 1,
-			wantPublish:  true,
+			name:           "Кейс: ошибка при публикации",
+			expectedErrors: expectedErrors{publishErr: errors.New("pub error")},
+			args:           args{value: "abc"},
+			wantRank:       0,
+			wantErr:        true,
+			wantDelete:     false,
+			wantStoreCnt:   1,
+			wantPublish:    true,
 		},
 	}
 
@@ -132,14 +132,14 @@ func TestRankCalculatorService_AddText_WithTestifyMock(t *testing.T) {
 
 			if tt.wantStoreCnt == 2 {
 				mockRepo.On("Store", mock.Anything, mock.AnythingOfType("model.Text")).Return(ErrKeyAlreadyExists).Once()
-				mockRepo.On("Delete", mock.Anything, model.TextID(textID)).Return(tt.fields.deleteErr).Once()
-				if tt.fields.deleteErr == nil {
+				mockRepo.On("Delete", mock.Anything, model.TextID(textID)).Return(tt.expectedErrors.deleteErr).Once()
+				if tt.expectedErrors.deleteErr == nil {
 					mockRepo.On("Store", mock.Anything, mock.AnythingOfType("model.Text")).Return(nil).Once()
 				}
 			} else {
-				mockRepo.On("Store", mock.Anything, mock.AnythingOfType("model.Text")).Return(tt.fields.storeErr).Once()
+				mockRepo.On("Store", mock.Anything, mock.AnythingOfType("model.Text")).Return(tt.expectedErrors.storeErr).Once()
 				if tt.wantDelete {
-					mockRepo.On("Delete", mock.Anything, model.TextID(textID)).Return(tt.fields.deleteErr).Once()
+					mockRepo.On("Delete", mock.Anything, model.TextID(textID)).Return(tt.expectedErrors.deleteErr).Once()
 				}
 			}
 
@@ -150,13 +150,14 @@ func TestRankCalculatorService_AddText_WithTestifyMock(t *testing.T) {
 					if !ok {
 						return false
 					}
+
 					if tt.wantRank == 0 {
 						assert.InDelta(t, tt.wantRank, rc.Rank, 1e-9)
 					} else {
 						assert.InEpsilon(t, tt.wantRank, rc.Rank, 1e-9)
 					}
 					return true
-				})).Return(tt.fields.publishErr).Once()
+				})).Return(tt.expectedErrors.publishErr).Once()
 			}
 
 			svc := NewRankCalculatorService(mockRepo, mockPublisher)
