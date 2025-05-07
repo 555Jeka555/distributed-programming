@@ -34,7 +34,7 @@ func (c *centrifugoClient) Publish(channel string, data interface{}) error {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "apikey _salt") // Замените на ваш API ключ
+	req.Header.Set("Authorization", "apikey _salt")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
