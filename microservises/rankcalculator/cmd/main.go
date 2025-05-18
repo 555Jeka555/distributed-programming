@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"github.com/go-redis/redis/v8"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
@@ -11,17 +12,46 @@ import (
 	"server/pkg/infrastructure/centrifugo"
 	"server/pkg/infrastructure/redis/provider"
 	"server/pkg/infrastructure/redis/repo"
+	"time"
 )
 
 func main() {
 	mainRdb := redis.NewClient(&redis.Options{
-		Addr: os.Getenv("REDIS_MAIN_URL"),
+		Addr:     os.Getenv("REDIS_MAIN_URL"),
+		Password: os.Getenv("REDIS_MAIN_PASSWORD"),
+		Username: "default",
 	})
 
+	pingCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if _, err := mainRdb.Ping(pingCtx).Result(); err != nil {
+		log.Fatalf("Failed to connect to main Redis: %v", err)
+	}
+	log.Println("Successfully connected to main Redis")
 	shards := map[string]*redis.Client{
-		"RU":   redis.NewClient(&redis.Options{Addr: os.Getenv("REDIS_RU_URL")}),
-		"EU":   redis.NewClient(&redis.Options{Addr: os.Getenv("REDIS_EU_URL")}),
-		"ASIA": redis.NewClient(&redis.Options{Addr: os.Getenv("REDIS_ASIA_URL")}),
+		"RU": redis.NewClient(&redis.Options{
+			Addr:     os.Getenv("REDIS_RU_URL"),
+			Password: os.Getenv("REDIS_RU_PASSWORD"),
+			Username: "default",
+		}),
+		"EU": redis.NewClient(&redis.Options{
+			Addr:     os.Getenv("REDIS_EU_URL"),
+			Password: os.Getenv("REDIS_EU_PASSWORD"),
+			Username: "default",
+		}),
+		"ASIA": redis.NewClient(&redis.Options{
+			Addr:     os.Getenv("REDIS_ASIA_URL"),
+			Password: os.Getenv("REDIS_ASIA_PASSWORD"),
+			Username: "default",
+		}),
+	}
+
+	for region, client := range shards {
+		if _, err := client.Ping(pingCtx).Result(); err != nil {
+			log.Fatalf("Failed to connect to %s Redis shard: %v", region, err)
+		}
+		log.Printf("Successfully connected to %s Redis shard", region)
 	}
 
 	conn, err := amqp.Dial(os.Getenv("RABBITMQ_URL"))
