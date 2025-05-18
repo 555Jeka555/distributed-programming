@@ -68,7 +68,7 @@ func TestRankCalculator_Parametric(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			actual := calcRank(tc.input)
 			if (actual-tc.expected) > 1e-9 || (tc.expected-actual) > 1e-9 {
-				t.Errorf("Rank(%q) = %v, ожидалось %v", tc.input, actual, tc.expected)
+				t.Errorf("Rank(%q) = %v, ожидалось %v", tc.input, actual, tc.expected) // TODO задействовать testifyassert
 			}
 		})
 	}
