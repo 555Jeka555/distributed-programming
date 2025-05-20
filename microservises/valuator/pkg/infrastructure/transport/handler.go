@@ -44,6 +44,7 @@ type IndexData struct {
 
 func NewHandler(
 	ctx context.Context,
+	jwtKey string,
 	publisher event.Publisher,
 	textService service.TextService,
 	textQueryService query.TextQueryService,
@@ -51,6 +52,7 @@ func NewHandler(
 ) Handler {
 	return &handler{
 		ctx:              ctx,
+		jwtKey:           jwtKey,
 		publisher:        publisher,
 		textService:      textService,
 		textQueryService: textQueryService,
@@ -60,6 +62,7 @@ func NewHandler(
 
 type handler struct {
 	ctx              context.Context
+	jwtKey           string
 	publisher        event.Publisher
 	textService      service.TextService
 	textQueryService query.TextQueryService

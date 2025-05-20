@@ -83,7 +83,7 @@ func main() {
 
 	ctx := context.Background()
 	writer := ampq.NewWriter("text", ch)
-	handler := transport.NewHandler(ctx, writer, textService, textQueryService, regions)
+	handler := transport.NewHandler(ctx, os.Getenv("JWT_KEY"), writer, textService, textQueryService, regions)
 
 	r := mux.NewRouter()
 

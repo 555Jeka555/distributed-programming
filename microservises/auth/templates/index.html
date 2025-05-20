@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Авторизация</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fc;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            max-width: 400px;
+            width: 100%;
+            position: relative;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="login"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        .btn-logout {
+            background-color: #f44336;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: auto;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        .btn-logout:hover {
+            background-color: #d32f2f;
+        }
+        .toggle-form {
+            text-align: center;
+            margin-top: 15px;
+        }
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: #4CAF50;
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 14px;
+        }
+        .toggle-btn:hover {
+            color: #45a049;
+        }
+        .hidden {
+            display: none;
+        }
+        .logged-in {
+            display: none;
+            text-align: center;
+        }
+        .logged-in h1 {
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Кнопка выхода (появляется после входа) -->
+    <button id="logout-btn" class="btn btn-logout hidden" onclick="logout()">Выйти</button>
+
+    <!-- Форма входа -->
+    <div id="login-form">
+        <h1>Вход</h1>
+        <form action="/login" method="POST" id="login-form-submit">
+            <div class="form-group">
+                <label for="login">Логин:</label>
+                <input type="text" id="login" name="login" required>
+            </div>
+            <div class="form-group">
+                <label for="login-password">Пароль:</label>
+                <input type="password" id="login-password" name="login-password" required>
+            </div>
+            <input type="submit" class="btn" value="Войти">
+        </form>
+        <div class="toggle-form">
+            <span>Нет аккаунта?</span>
+            <button class="toggle-btn" onclick="showRegisterForm()">Зарегистрироваться</button>
+        </div>
+    </div>
+
+    <!-- Форма регистрации -->
+    <div id="register-form" class="hidden">
+        <h1>Регистрация</h1>
+        <form action="/register" method="POST" id="register-form-submit">
+            <div class="form-group">
+                <label for="reg-login">Логин:</label>
+                <input type="text" id="reg-login" name="reg-login" required>
+            </div>
+            <div class="form-group">
+                <label for="reg-password">Пароль:</label>
+                <input type="password" id="reg-password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="reg-confirm-password">Подтвердите пароль:</label>
+                <input type="password" id="reg-confirm-password" name="confirm_password" required>
+            </div>
+            <input type="submit" class="btn" value="Зарегистрироваться">
+        </form>
+        <div class="toggle-form">
+            <span>Уже есть аккаунт?</span>
+            <button class="toggle-btn" onclick="showLoginForm()">Войти</button>
+        </div>
+    </div>
+
+    <!-- Сообщение после успешного входа -->
+    <div id="logged-in" class="logged-in">
+        <h1>Вы успешно вошли в систему!</h1>
+        <p>Добро пожаловать, <span id="username-display"></span>!</p>
+    </div>
+</div>
+
+<script>
+    // Проверяем, авторизован ли пользователь при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        // Проверка из localStorage (можно заменить на проверку cookie/session)
+        if (localStorage.getItem('isLoggedIn') === 'true') {
+            showLoggedInState(localStorage.getItem('username'));
+        }
+    });
+
+    function showRegisterForm() {
+        document.getElementById('login-form').classList.add('hidden');
+        document.getElementById('register-form').classList.remove('hidden');
+    }
+
+    function showLoginForm() {
+        document.getElementById('register-form').classList.add('hidden');
+        document.getElementById('login-form').classList.remove('hidden');
+    }
+
+    function showLoggedInState(username) {
+        document.getElementById('login-form').classList.add('hidden');
+        document.getElementById('register-form').classList.add('hidden');
+        document.getElementById('logged-in').classList.remove('hidden');
+        document.getElementById('logout-btn').classList.remove('hidden');
+        document.getElementById('username-display').textContent = username || 'Пользователь';
+    }
+
+    async  function logout() {
+        // Очищаем данные авторизации
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('username');
+
+        const response = await fetch('/logout', {
+            method: 'POST',
+            credentials: 'include' // Важно для отправки cookies
+        });
+
+        if (!response.ok) {
+            throw new Error('Logout failed');
+        }
+
+        // Возвращаем на форму входа
+        document.getElementById('logged-in').classList.add('hidden');
+        document.getElementById('logout-btn').classList.add('hidden');
+        document.getElementById('login-form').classList.remove('hidden');
+
+        // Очищаем поля формы
+        document.getElementById('login').value = '';
+        document.getElementById('login-password').value = '';
+    }
+
+    // Обработчики форм (имитация входа/регистрации)
+    document.getElementById('login-form-submit').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const username = document.getElementById('login').value;
+
+        // В реальном приложении здесь должен быть вызов API для входа
+        // fetch('/login', { method: 'POST', body: new FormData(this) });
+
+        // Сохраняем в localStorage (в реальном приложении используйте cookie/session)
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('username', username);
+
+        showLoggedInState(username);
+    });
+
+    document.getElementById('register-form-submit').addEventListener('submit', function(e) {
+        const password = document.getElementById('reg-password').value;
+        const confirmPassword = document.getElementById('reg-confirm-password').value;
+
+        if (password !== confirmPassword) {
+            e.preventDefault();
+            alert('Пароли не совпадают!');
+            return;
+        }
+
+        // В реальном приложении здесь должен быть вызов API для регистрации
+        // fetch('/register', { method: 'POST', body: new FormData(this) });
+
+        // После успешной регистрации автоматически входим
+        const username = document.getElementById('reg-name').value;
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('username', username);
+
+        e.preventDefault(); // Удалить в реальном приложении
+        showLoggedInState(username);
+    });
+</script>
+</body>
+</html>
