@@ -11,7 +11,7 @@ import (
 )
 
 type Handler interface {
-	Handle(ctx context.Context, body string) error
+	Handle(ctx context.Context, body, login string) error
 }
 
 func NewHandler(
@@ -32,11 +32,11 @@ type handler struct {
 	centrifugoClient service.CentrifugoClient
 }
 
-func (h *handler) Handle(ctx context.Context, body string) error {
+func (h *handler) Handle(ctx context.Context, body, login string) error {
 	delay := time.Duration(rand.Intn(2)+1) * time.Second
 	time.Sleep(delay)
 
-	err := h.rankCalculator.AddText(ctx, body)
+	err := h.rankCalculator.AddText(ctx, body, login)
 	if err != nil && !errors.Is(err, service.ErrKeyAlreadyExists) {
 		return err
 	}

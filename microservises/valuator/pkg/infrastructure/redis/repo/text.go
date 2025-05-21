@@ -20,6 +20,7 @@ type textSerializable struct {
 	TextID     string  `json:"text_id"`
 	Similarity int     `json:"similarity"`
 	Value      string  `json:"value"`
+	Login      string  `json:"login"`
 	Rank       float64 `json:"rank"`
 }
 
@@ -44,6 +45,7 @@ func (t *textRepository) FindByID(ctx context.Context, textID model.TextID) (mod
 		model.TextID(text.TextID),
 		text.Similarity,
 		text.Value,
+		text.Login,
 		text.Rank,
 	), nil
 }

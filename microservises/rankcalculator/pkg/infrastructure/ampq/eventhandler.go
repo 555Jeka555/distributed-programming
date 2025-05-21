@@ -22,6 +22,7 @@ type integrationEventHandler struct {
 }
 
 type eventBody struct {
+	Login  string `json:"login"`
 	Text   string `json:"text"`
 	Region string `json:"region"`
 }
@@ -34,5 +35,5 @@ func (h *integrationEventHandler) Handle(ctx context.Context, body []byte) error
 		return err
 	}
 
-	return h.handler.Handle(context.WithValue(ctx, repo.RegionKey{}, evt.Region), evt.Text)
+	return h.handler.Handle(context.WithValue(ctx, repo.RegionKey{}, evt.Region), evt.Text, evt.Login)
 }

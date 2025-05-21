@@ -108,7 +108,7 @@
     <!-- Форма входа -->
     <div id="login-form">
         <h1>Вход</h1>
-        <form action="/login" method="POST" id="login-form-submit">
+        <form action="/auth/login" method="POST" id="login-form-submit">
             <div class="form-group">
                 <label for="login">Логин:</label>
                 <input type="text" id="login" name="login" required>
@@ -128,7 +128,7 @@
     <!-- Форма регистрации -->
     <div id="register-form" class="hidden">
         <h1>Регистрация</h1>
-        <form action="/register" method="POST" id="register-form-submit">
+        <form action="/auth/register" method="POST" id="register-form-submit">
             <div class="form-group">
                 <label for="reg-login">Логин:</label>
                 <input type="text" id="reg-login" name="reg-login" required>
@@ -157,14 +157,6 @@
 </div>
 
 <script>
-    // Проверяем, авторизован ли пользователь при загрузке страницы
-    document.addEventListener('DOMContentLoaded', function() {
-        // Проверка из localStorage (можно заменить на проверку cookie/session)
-        if (localStorage.getItem('isLoggedIn') === 'true') {
-            showLoggedInState(localStorage.getItem('username'));
-        }
-    });
-
     function showRegisterForm() {
         document.getElementById('login-form').classList.add('hidden');
         document.getElementById('register-form').classList.remove('hidden');
@@ -184,11 +176,7 @@
     }
 
     async  function logout() {
-        // Очищаем данные авторизации
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('username');
-
-        const response = await fetch('/logout', {
+        const response = await fetch('/auth/logout', {
             method: 'POST',
             credentials: 'include' // Важно для отправки cookies
         });
@@ -205,6 +193,8 @@
         // Очищаем поля формы
         document.getElementById('login').value = '';
         document.getElementById('login-password').value = '';
+
+        window.location.href = '/auth/login-page';
     }
 
     // Обработчики форм (имитация входа/регистрации)
@@ -214,10 +204,6 @@
 
         // В реальном приложении здесь должен быть вызов API для входа
         // fetch('/login', { method: 'POST', body: new FormData(this) });
-
-        // Сохраняем в localStorage (в реальном приложении используйте cookie/session)
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('username', username);
 
         showLoggedInState(username);
     });

@@ -24,7 +24,7 @@ func NewRankCalculatorService(
 }
 
 type RankCalculatorService interface {
-	AddText(ctx context.Context, value string) error
+	AddText(ctx context.Context, value, login string) error
 }
 
 type rankCalculatorService struct {
@@ -32,10 +32,10 @@ type rankCalculatorService struct {
 	publisher event.Publisher
 }
 
-func (r *rankCalculatorService) AddText(ctx context.Context, value string) error {
+func (r *rankCalculatorService) AddText(ctx context.Context, value, login string) error {
 	textID := r.repo.GetTextID(value)
 	rank := calcRank(value)
-	text := model.NewText(textID, 0, value, rank)
+	text := model.NewText(textID, 0, value, login, rank)
 
 	err := r.repo.Store(ctx, text)
 	if err != nil {
@@ -44,7 +44,7 @@ func (r *rankCalculatorService) AddText(ctx context.Context, value string) error
 			if err != nil {
 				return err
 			}
-			text = model.NewText(textID, 1, value, rank)
+			text = model.NewText(textID, 1, value, login, rank)
 
 			return r.repo.Store(ctx, text)
 		}

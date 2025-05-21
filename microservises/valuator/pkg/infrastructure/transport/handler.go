@@ -12,6 +12,7 @@ import (
 	"server/pkg/app/event"
 	"server/pkg/app/query"
 	"server/pkg/app/service"
+	jwtinfra "server/pkg/infrastructure/jwt"
 	"server/pkg/infrastructure/redis/repo"
 	"time"
 )
@@ -69,7 +70,13 @@ type handler struct {
 	regions          map[string]string
 }
 
-func (h *handler) Index(w http.ResponseWriter, _ *http.Request) {
+func (h *handler) Index(w http.ResponseWriter, r *http.Request) {
+	_, err := h.getLoginFromToken(r)
+	if err != nil {
+		http.Redirect(w, r, "/auth/login-page", http.StatusMovedPermanently)
+		return
+	}
+
 	w.Header().Set("Content-Type", "text/html")
 
 	data := IndexData{
@@ -95,10 +102,17 @@ func (h *handler) Index(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (h *handler) SummaryCreate(w http.ResponseWriter, r *http.Request) {
+	login, err := h.getLoginFromToken(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
 	textValue := r.FormValue("text")
 	county := r.FormValue("country")
 
 	body, err := json.Marshal(map[string]any{
+		"login":  login,
 		"text":   textValue,
 		"region": h.regions[county],
 	})
@@ -112,11 +126,17 @@ func (h *handler) SummaryCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	textID := h.textService.GetTextID(textValue)
-	redirectURL := fmt.Sprintf("/summary?textID=%s", textID)
+	redirectURL := fmt.Sprintf("/valuator/summary?textID=%s", textID)
 	http.Redirect(w, r, redirectURL, http.StatusFound)
 }
 
 func (h *handler) Summary(w http.ResponseWriter, r *http.Request) {
+	login, err := h.getLoginFromToken(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
 	w.Header().Set("Content-Type", "text/html")
 
 	textID := r.URL.Query().Get("textID")
@@ -128,6 +148,11 @@ func (h *handler) Summary(w http.ResponseWriter, r *http.Request) {
 	text, err := h.textQueryService.GetTextByID(h.ctx, textID)
 	if err != nil && !errors.Is(err, repo.NotFoundRegion) {
 		log.Panic(err)
+	}
+
+	if text.Login != "" && text.Login != login {
+		http.Error(w, fmt.Sprintf("text is unavailable for this login %s", login), http.StatusForbidden)
+		return
 	}
 
 	ip := r.Header.Get("X-Forwarded-For")
@@ -176,6 +201,54 @@ func (h *handler) About(w http.ResponseWriter, _ *http.Request) {
 	if err != nil {
 		log.Panic(err)
 	}
+}
+
+func (h *handler) getLoginFromToken(r *http.Request) (string, error) {
+	tokenString, err := h.getTokenFromCookie(r, "access_token")
+	if err != nil {
+		return "", err
+	}
+
+	claims, err := h.parseAndValidateToken(tokenString)
+	if err != nil {
+		return "", fmt.Errorf("invalid token: %v", err)
+	}
+
+	log.Println("claims", claims)
+
+	return claims.Login, nil
+}
+
+func (h *handler) parseAndValidateToken(tokenString string) (*jwtinfra.Claims, error) {
+	claims := &jwtinfra.Claims{}
+
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(h.jwtKey), nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse token: %v", err)
+	}
+
+	if !token.Valid {
+		return nil, errors.New("invalid token")
+	}
+
+	if time.Now().Unix() > claims.ExpiresAt {
+		return nil, errors.New("token expired")
+	}
+
+	return claims, nil
+}
+
+func (h *handler) getTokenFromCookie(r *http.Request, cookieName string) (string, error) {
+	cookie, err := r.Cookie(cookieName)
+	if err != nil {
+		return "", fmt.Errorf("cookie %s not found: %v", cookieName, err)
+	}
+	return cookie.Value, nil
 }
 
 func generateCentrifugoToken(identifier string, channel string) string {

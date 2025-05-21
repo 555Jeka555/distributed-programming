@@ -64,12 +64,29 @@
         input[type="submit"]:hover {
             background-color: #45a049;
         }
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #f44336;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .logout-btn:hover {
+            background-color: #d32f2f;
+        }
     </style>
 </head>
 <body>
 <div class="container">
+    <button class="logout-btn" onclick="logout()">Выйти</button>
+
     <h1>Введите текст для оценки:</h1>
-    <form action="/summary/create" method="POST">
+    <form action="/valuator/summary/create" method="POST">
         <textarea name="text" rows="4" placeholder="Введите текст"></textarea><br><br>
         <div class="form-group">
             <label for="country">Страна:</label>
@@ -83,5 +100,21 @@
         <input type="submit" value="Отправить">
     </form>
 </div>
+
+<script>
+    async  function logout() {
+        const response = await fetch('/auth/logout', {
+            method: 'POST',
+            credentials: 'include' // Важно для отправки cookies
+        });
+
+        if (!response.ok) {
+            throw new Error('Logout failed');
+        }
+
+        window.location.href = '/auth/login-page';
+    }
+</script>
+
 </body>
 </html>

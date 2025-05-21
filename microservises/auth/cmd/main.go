@@ -40,10 +40,10 @@ func main() {
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/login-page", handler.Index).Methods("GET")
-	r.HandleFunc("/login", handler.Login).Methods("POST")
-	r.HandleFunc("/register", handler.Register).Methods("POST")
-	r.HandleFunc("/logout", handler.Logout).Methods("POST")
+	r.HandleFunc("/auth/login-page", handler.LoginPage).Methods("GET")
+	r.HandleFunc("/auth/login", handler.Login).Methods("POST")
+	r.HandleFunc("/auth/register", handler.Register).Methods("POST")
+	r.HandleFunc("/auth/logout", handler.Logout).Methods("POST")
 
 	log.Println(fmt.Sprintf("Starting server on %s", os.Getenv("LISTENING_SERVER_PORT")))
 	http.ListenAndServe(os.Getenv("LISTENING_SERVER_PORT"), r)

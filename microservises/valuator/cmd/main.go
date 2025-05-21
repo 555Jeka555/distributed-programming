@@ -88,9 +88,9 @@ func main() {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/", handler.Index).Methods("GET")
-	r.HandleFunc("/summary/create", handler.SummaryCreate).Methods("POST")
-	r.HandleFunc("/summary", handler.Summary).Methods("GET")
-	r.HandleFunc("/about", handler.About).Methods("GET")
+	r.HandleFunc("/valuator/summary/create", handler.SummaryCreate).Methods("POST")
+	r.HandleFunc("/valuator/summary", handler.Summary).Methods("GET")
+	r.HandleFunc("/valuator/about", handler.About).Methods("GET")
 
 	log.Println(fmt.Sprintf("Starting server on %s", os.Getenv("LISTENING_SERVER_PORT")))
 	http.ListenAndServe(os.Getenv("LISTENING_SERVER_PORT"), r)

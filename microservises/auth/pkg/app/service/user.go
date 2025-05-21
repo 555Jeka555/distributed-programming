@@ -2,9 +2,12 @@ package service
 
 import (
 	"context"
+	"errors"
 	"log"
 	"server/pkg/app/model"
 )
+
+var ErrKeyAlreadyExists = errors.New("key already exists")
 
 func NewUserService(hashService HashService, userRepository model.UserRepository) UserService {
 	return UserService{
@@ -37,6 +40,8 @@ func (a *UserService) Authenticate(ctx context.Context, login, password string) 
 	if err != nil {
 		return false, err
 	}
+
+	log.Println("user", user)
 
 	if user.Login() != login {
 		log.Printf("User not exist %s", user.Login())

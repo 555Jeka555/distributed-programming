@@ -10,6 +10,7 @@ type Text struct {
 	textID     TextID
 	similarity int
 	value      string
+	login      string
 	rank       float64
 }
 
@@ -25,13 +26,15 @@ type TextReadRepository interface {
 func LoadText(
 	textID TextID,
 	similarity int,
-	value string,
+	value,
+	login string,
 	rank float64,
 ) Text {
 	return Text{
 		textID:     textID,
 		similarity: similarity,
 		value:      value,
+		login:      login,
 		rank:       rank,
 	}
 }
@@ -42,6 +45,10 @@ func (t *Text) TextID() TextID {
 
 func (t *Text) Value() string {
 	return t.value
+}
+
+func (t *Text) Login() string {
+	return t.login
 }
 
 func (t *Text) Similarity() int {

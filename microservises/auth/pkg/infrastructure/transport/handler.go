@@ -13,7 +13,7 @@ import (
 )
 
 type Handler interface {
-	Index(w http.ResponseWriter, r *http.Request)
+	LoginPage(w http.ResponseWriter, r *http.Request)
 	Register(w http.ResponseWriter, r *http.Request)
 	Login(w http.ResponseWriter, r *http.Request)
 	Logout(w http.ResponseWriter, r *http.Request)
@@ -38,7 +38,7 @@ type handler struct {
 	userService *service.UserService
 }
 
-func (h *handler) Index(w http.ResponseWriter, _ *http.Request) {
+func (h *handler) LoginPage(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 
 	tmplParsed, err := template.ParseFiles("./templates/index.html")
@@ -59,18 +59,21 @@ func (h *handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	err := h.userService.CreateUser(h.ctx, login, password)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	h.login(w, login)
 
-	http.Redirect(w, r, "/", http.StatusPermanentRedirect)
+	http.Redirect(w, r, "/", http.StatusMovedPermanently)
 }
 
 func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 	login := r.FormValue("login")
 	password := r.FormValue("login-password")
+
+	log.Println("login", login)
+	log.Println("password", password)
 
 	isAuth, err := h.userService.Authenticate(h.ctx, login, password)
 	if err != nil {
@@ -84,14 +87,12 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	h.login(w, login)
 
-	http.Redirect(w, r, "/", http.StatusPermanentRedirect)
+	http.Redirect(w, r, "/", http.StatusMovedPermanently)
 }
 
 func (h *handler) Logout(w http.ResponseWriter, r *http.Request) {
 	deleteCookie(w, "access_token")
 	deleteCookie(w, "refresh_token")
-
-	http.Redirect(w, r, "/", http.StatusPermanentRedirect)
 }
 
 func (h *handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
@@ -158,7 +159,7 @@ func (h *handler) createToken(login string, expirationTimeDur time.Duration) (st
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(h.jwtKey)
+	tokenString, err := token.SignedString([]byte(h.jwtKey))
 	if err != nil {
 		return "", time.Time{}, err
 	}

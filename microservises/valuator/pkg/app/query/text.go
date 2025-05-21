@@ -19,6 +19,7 @@ func NewTextQueryService(repo model.TextReadRepository) TextQueryService {
 type TextData struct {
 	Similarity int
 	Value      string
+	Login      string
 	Rank       float64
 }
 
@@ -35,6 +36,7 @@ func (t *textQueryService) GetTextByID(ctx context.Context, textID string) (Text
 	return TextData{
 		Similarity: text.Similarity(),
 		Value:      text.Value(),
+		Login:      text.Login(),
 		Rank:       text.Rank(),
 	}, nil
 }
