@@ -150,8 +150,6 @@ func (h *handler) Summary(w http.ResponseWriter, r *http.Request) {
 		log.Panic(err)
 	}
 
-	log.Println("Text login", text.Login)
-	log.Println("Token Login", login)
 	if text.Login != "" && text.Login != login {
 		http.Error(w, fmt.Sprintf("text is unavailable for this login %s", login), http.StatusForbidden)
 		return
@@ -215,8 +213,6 @@ func (h *handler) getLoginFromToken(r *http.Request) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("invalid token: %v", err)
 	}
-
-	log.Println("claims", claims)
 
 	return claims.Login, nil
 }

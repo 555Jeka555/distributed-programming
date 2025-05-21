@@ -72,9 +72,6 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 	login := r.FormValue("login")
 	password := r.FormValue("login-password")
 
-	log.Println("login", login)
-	log.Println("password", password)
-
 	isAuth, err := h.userService.Authenticate(h.ctx, login, password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
