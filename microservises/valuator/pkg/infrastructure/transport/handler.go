@@ -150,6 +150,8 @@ func (h *handler) Summary(w http.ResponseWriter, r *http.Request) {
 		log.Panic(err)
 	}
 
+	log.Println("Text login", text.Login)
+	log.Println("Token Login", login)
 	if text.Login != "" && text.Login != login {
 		http.Error(w, fmt.Sprintf("text is unavailable for this login %s", login), http.StatusForbidden)
 		return

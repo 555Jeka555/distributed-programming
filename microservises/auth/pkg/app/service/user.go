@@ -29,6 +29,9 @@ func (a *UserService) CreateUser(ctx context.Context, login, password string) er
 
 	if user.Login() == login {
 		log.Printf("User already exist %s", user.Login())
+		if user.Password() != a.hashService.Hash(password) {
+			return errors.New("password not matched")
+		}
 		return nil
 	}
 

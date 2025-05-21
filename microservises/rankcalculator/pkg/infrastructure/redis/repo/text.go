@@ -55,6 +55,7 @@ func (t *textRepository) Store(ctx context.Context, text model.Text) error {
 		TextID:     string(text.TextID()),
 		Similarity: text.Similarity(),
 		Rank:       text.Rank(),
+		Login:      text.Login(),
 		Value:      text.Value(),
 	}, 0)
 }
